@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Clean Up</title>
+<link rel="stylesheet" href="./cleanup.css">
+</head>
+<body>
+  <a class="back-arrow" href="./index.html" aria-label="Back to task screen">←</a>
+  <main class="cleanup-shell">
+    <h1>CLEAN UP</h1>
+    <img class="cleanup-steps" src="./cleanup-steps.png" alt="Clean up steps">
+    <video id="cleanupSong" class="cleanup-video" src="./cleanup-song.mp4" controls autoplay preload="auto" playsinline></video>
+  </main>
+<script>
+(() => {
+  const video = document.getElementById("cleanupSong");
+  if(!video) return;
+  video.volume = 1;
+  const tryPlay = () => video.play().catch(() => {});
+  tryPlay();
+  window.addEventListener("load", tryPlay, {once:true});
+  document.addEventListener("pointerdown", tryPlay, {once:true});
+})();
+</script>
+</body>
+</html>
