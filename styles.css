@@ -723,3 +723,93 @@ body.edit-mode .step-remove,body.edit-mode .reminder-remove{display:grid!importa
  .step-row,.reminder-row{grid-template-columns:22px 64px minmax(0,1fr) 24px!important;min-height:68px}
  .step-pic-wrap,.reminder-pic-wrap,.step-pic,.reminder-pic{width:58px;height:58px}
 }
+
+
+/* ==== v27 objective layout + list reliability visual polish ==== */
+.objective-section{
+  min-height:0;
+}
+.objective-content{
+  flex:1!important;
+  min-height:0!important;
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  gap:8px!important;
+  padding:4px 8px 6px!important;
+}
+.objective-content .section-icon-slot{
+  width:132px!important;
+  height:132px!important;
+  flex:0 0 132px!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  overflow:visible!important;
+  margin:0 auto!important;
+  box-shadow:none!important;
+}
+.objective-content .section-icon-slot img{
+  width:100%!important;
+  height:100%!important;
+  object-fit:contain!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+.objective-content .section-icon-placeholder{
+  width:100%!important;
+  height:100%!important;
+  border:2px dashed rgba(0,0,0,.35)!important;
+  border-radius:14px!important;
+  background:rgba(255,255,255,.35)!important;
+  font-size:12px!important;
+}
+body:not(.edit-mode) .objective-content .section-icon-slot:not(.has-image){display:none!important}
+.objective-content .section-icon-remove{
+  top:-2px!important;
+  right:-2px!important;
+}
+.objective-input{
+  width:100%!important;
+  max-width:none!important;
+  flex:0 0 126px!important;
+  min-height:126px!important;
+  max-height:126px!important;
+  margin-top:auto!important;
+  border:3px solid #000!important;
+  border-radius:15px!important;
+  padding:12px 14px!important;
+  text-align:center!important;
+  resize:none!important;
+  background:#fff!important;
+  font-size:clamp(22px,2vw,34px)!important;
+  line-height:1.08!important;
+}
+/* Keep add/edit controls easy to see while editing. */
+body.edit-mode .list-edit-bar{display:flex!important;z-index:20!important}
+body.edit-mode #successList,body.edit-mode #reminderList{min-height:54px!important}
+body.edit-mode .step-row.is-blank,body.edit-mode .reminder-row.is-blank{display:grid!important}
+@media(max-width:900px){
+  .objective-content .section-icon-slot{width:100px!important;height:100px!important;flex-basis:100px!important}
+  .objective-input{flex-basis:100px!important;min-height:100px!important;max-height:100px!important;font-size:clamp(18px,1.7vw,27px)!important}
+}
+
+
+/* ---------- v28 footer safe area + fullscreen fallback ---------- */
+.board{padding-bottom:58px!important}
+.grade-switch,.utilities,.dashboard-nav{bottom:8px!important}
+.grade-switch{left:15px!important}
+.utilities{right:15px!important}
+.dashboard-nav{left:50%!important}
+.early-finisher-wrap{position:relative;z-index:2}
+body.presentation-mode{position:fixed;inset:0;width:100vw;height:100vh;overflow:hidden;background:#fff}
+body.presentation-mode .board{width:100vw;height:100vh}
+@media(max-width:900px){
+  .board{padding-bottom:50px!important}
+  .grade-switch,.utilities,.dashboard-nav{bottom:5px!important}
+  .grade-btn,.utility{height:27px!important;padding:0 8px!important;font-size:8px!important}
+  .dashboard-nav{padding:5px 9px!important;font-size:9px!important}
+}

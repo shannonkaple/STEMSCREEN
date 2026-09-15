@@ -140,6 +140,12 @@ function setPath(obj, path, value) {
 function escapeHtmlAttr(s) {
   return String(s ?? "").replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 }
+function escapeHtml(s) {
+  return String(s ?? "")
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;");
+}
 
 /* IndexedDB for uploaded image/GIF/video */
 const DB_NAME = "TaskscreenMediaV1";
@@ -537,6 +543,7 @@ $("#addSuccessBtn").addEventListener("click", async e => {
   e.preventDefault();
   e.stopPropagation();
   if(!editMode) setEditMode(true);
+  if(!Array.isArray(state.successCriteria)) state.successCriteria = [];
   state.successCriteria.push({id:`s_${Date.now()}_${Math.random().toString(36).slice(2,7)}`,text:""});
   saveState();
   await renderAllLists();
@@ -547,6 +554,7 @@ $("#addReminderBtn").addEventListener("click", async e => {
   e.preventDefault();
   e.stopPropagation();
   if(!editMode) setEditMode(true);
+  if(!Array.isArray(state.reminders)) state.reminders = [];
   state.reminders.push({id:`r_${Date.now()}_${Math.random().toString(36).slice(2,7)}`,text:""});
   saveState();
   await renderAllLists();
@@ -860,6 +868,51 @@ $$(".panel-tools button").forEach(btn => btn.addEventListener("click", e => {
   saveState();
   applyPanelFont(panel);
 }));
+
+
+/* Page fullscreen */
+function isPageFullscreen(){
+  return !!(document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement);
+}
+async function enterPageFullscreen(){
+  const el=document.documentElement;
+  const request=el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
+  if(!request) return false;
+  try{
+    const result=request.call(el);
+    if(result && typeof result.then === "function") await result;
+    return true;
+  }catch(e){ return false; }
+}
+async function exitPageFullscreen(){
+  const exit=document.exitFullscreen || document.webkitExitFullscreen || document.msExitFullscreen;
+  if(!exit) return false;
+  try{
+    const result=exit.call(document);
+    if(result && typeof result.then === "function") await result;
+    return true;
+  }catch(e){ return false; }
+}
+function syncFullscreenButton(){
+  const btn=$("#fullscreenToggle");
+  if(!btn) return;
+  btn.textContent=isPageFullscreen()?"EXIT FULL SCREEN":"FULL SCREEN";
+}
+const fullscreenToggle=$("#fullscreenToggle");
+if(fullscreenToggle){
+  fullscreenToggle.addEventListener("click",async e=>{
+    e.preventDefault();e.stopPropagation();
+    if(isPageFullscreen()){
+      await exitPageFullscreen();
+      document.body.classList.remove("presentation-mode");
+    }else{
+      const ok=await enterPageFullscreen();
+      if(!ok) document.body.classList.toggle("presentation-mode");
+    }
+    syncFullscreenButton();
+  });
+  ["fullscreenchange","webkitfullscreenchange","MSFullscreenChange"].forEach(evt=>document.addEventListener(evt,syncFullscreenButton));
+}
 
 /* Full render */
 async function renderAll() {
