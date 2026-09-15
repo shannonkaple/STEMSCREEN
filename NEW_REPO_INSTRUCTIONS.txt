@@ -1,0 +1,34 @@
+TASKSCREEN v24 — CLEAN NEW REPO
+
+1. Create the new blank GitHub repo/page.
+2. Unzip this package.
+3. Drag ALL files from this package directly into the repo ROOT.
+4. Also drag in your own:
+   - KAHomebodyClub.ttf
+   - VAG-Rounded-Std-Black_47296.ttf
+5. Commit.
+6. Turn on GitHub Pages for main / root if needed.
+7. Open the live page and press Ctrl + Shift + R once.
+
+NO old files need to be deleted because this package is intended for a fresh repo.
+
+Included:
+- index.html / styles.css / app.js
+- grouper.html
+- cleanup.html / cleanup.css
+- cleanup-steps.png
+- cleanup-song.mp4
+- star.png
+- .nojekyll
+
+Latest refinements:
+- larger STEP pictures with wrapping text
+- one optional Objective icon
+- one optional Success Criteria icon
+- Success Criteria wraps instead of cutting off
+- blank criteria/steps disappear outside Edit mode
+- CLEAN UP title overlaps the rainbow
+- cleanup video upper-right
+- cleanup graphic low near the rainbow
+- Rainbow Grouper class names use VAG
+- Rainbow Grouper table labels have a thin black outline

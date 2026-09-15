@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>STEM Task Screen</title>
+<link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+<div class="board" id="board">
+
+  <section class="panel learning" data-panel="learning">
+    <div class="panel-tools edit-only">
+      <span>TITLE</span><button data-font-part="title" data-font-delta="-2">A−</button><button data-font-part="title" data-font-delta="2">A+</button>
+      <span>TEXT</span><button data-font-part="text" data-font-delta="-2">A−</button><button data-font-part="text" data-font-delta="2">A+</button>
+    </div>
+
+    <div class="learning-grid" id="learningGrid">
+      <div class="learning-section objective-section">
+        <div class="learning-title">
+          <svg class="title-icon" viewBox="0 0 64 64" aria-hidden="true"><circle cx="29" cy="35" r="21" fill="#fff" stroke="#000" stroke-width="3"/><circle cx="29" cy="35" r="15" fill="#F3237C"/><circle cx="29" cy="35" r="9" fill="#fff"/><circle cx="29" cy="35" r="4" fill="#F3237C"/><path d="M34 29 52 11" stroke="#1675E8" stroke-width="5" stroke-linecap="round"/><path d="m45 10 11-2-2 11-7 1z" fill="#22B8F4" stroke="#000" stroke-width="2"/></svg>
+          <span data-edit-key="titles.objective">OBJECTIVE</span>
+        </div>
+        <div class="objective-content">
+          <div class="section-icon-slot" data-section-icon="objective"></div>
+          <textarea id="objectiveInput" class="objective-input" placeholder="Type today's objective..."></textarea>
+        </div>
+      </div>
+
+      <div class="learning-divider" id="learningDivider"></div>
+
+      <div class="learning-section success-section" id="successSection">
+        <div class="learning-title">
+          <span data-edit-key="titles.success">SUCCESS CRITERIA</span>
+        </div>
+        <div class="success-content">
+          <div class="section-icon-slot" data-section-icon="success"></div>
+          <div class="success-list" id="successList"></div>
+        </div>
+        <div class="list-edit-bar edit-only">
+          <span>MARKER</span>
+          <button class="marker-choice" data-marker-target="success" data-marker="star" type="button">★</button>
+          <button class="marker-choice" data-marker-target="success" data-marker="bullet" type="button">•</button>
+          <button class="add-step" id="addSuccessBtn" type="button">+ ADD</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel countdown-panel" data-panel="countdown">
+    <div class="panel-tools edit-only">
+      <span>TITLE</span><button data-font-part="title" data-font-delta="-2">A−</button><button data-font-part="title" data-font-delta="2">A+</button>
+      <span>TEXT</span><button data-font-part="text" data-font-delta="-2">A−</button><button data-font-part="text" data-font-delta="2">A+</button>
+    </div>
+    <div class="panel-title countdown-title">
+      <svg class="title-icon" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="34" r="21" fill="#fff" stroke="#000" stroke-width="3"/><circle cx="32" cy="34" r="16" fill="#fff" stroke="#F3237C" stroke-width="5"/><path d="M32 34V23M32 34l9 6" stroke="#111" stroke-width="4" stroke-linecap="round"/><path d="M18 12 10 20M46 12l8 8" stroke="#111" stroke-width="4" stroke-linecap="round"/><path d="M23 9h18" stroke="#FFD31B" stroke-width="5" stroke-linecap="round"/></svg>
+      <span data-edit-key="titles.countdown">TIME LEFT</span>
+    </div>
+    <div class="countdown-display" id="countdownDisplay">--:--</div>
+    <input id="endTimeInput" class="end-time-input" type="time" aria-label="Time class ends" title="Time class ends">
+  </section>
+
+  <section class="panel voice" data-panel="voice">
+    <div class="panel-tools edit-only">
+      <span>TITLE</span><button data-font-part="title" data-font-delta="-2">A−</button><button data-font-part="title" data-font-delta="2">A+</button>
+      <span>TEXT</span><button data-font-part="text" data-font-delta="-2">A−</button><button data-font-part="text" data-font-delta="2">A+</button>
+    </div>
+    <div class="panel-title"><span data-edit-key="titles.voice">VOICE LEVEL</span></div>
+    <div class="voice-buttons" id="voiceButtons">
+      <button class="voice-btn" data-level="0" style="--vc:#F3237C">0</button>
+      <button class="voice-btn" data-level="1" style="--vc:#F47607">1</button>
+      <button class="voice-btn" data-level="2" style="--vc:#FAB910">2</button>
+      <button class="voice-btn" data-level="3" style="--vc:#56A328">3</button>
+      <button class="voice-btn" data-level="4" style="--vc:#22B8F4">4</button>
+    </div>
+    <div class="voice-label" id="voiceLabel" data-edit-voice-label>TABLE TALK</div>
+  </section>
+
+  <section class="panel task" data-panel="task">
+    <div class="panel-tools edit-only">
+      <span>TITLE</span><button data-font-part="title" data-font-delta="-2">A−</button><button data-font-part="title" data-font-delta="2">A+</button>
+      <span>TEXT</span><button data-font-part="text" data-font-delta="-2">A−</button><button data-font-part="text" data-font-delta="2">A+</button>
+    </div>
+    <div class="panel-title task-title">
+      <img class="task-star-img" src="./star.png" alt="">
+      <span data-edit-key="titles.task">TASK OF THE DAY</span>
+    </div>
+    <div class="task-sub editable-block" id="taskSub" data-edit-key="taskSub" data-placeholder="Type what students need to do..."></div>
+
+    <div class="task-stage">
+      <div class="task-editor edit-only">
+        <div class="mode-row">
+          <button class="mode-btn" data-mode="text">TEXT</button>
+          <button class="mode-btn" data-mode="image">IMAGE / GIF</button>
+          <button class="mode-btn" data-mode="video">VIDEO</button>
+        </div>
+        <div class="task-control" data-control="text">
+          <textarea id="taskTextInput" placeholder="Type the task, directions, question, etc."></textarea>
+        </div>
+        <div class="task-control" data-control="image">
+          <label class="file-btn">UPLOAD IMAGE / GIF<input id="imageFileInput" type="file" accept="image/*" hidden></label>
+          <input id="imageUrlInput" type="url" placeholder="or paste an image / GIF URL">
+          <button class="file-btn" id="useImageUrlBtn" type="button">USE URL</button>
+        </div>
+        <div class="task-control" data-control="video">
+          <label class="file-btn">UPLOAD VIDEO<input id="videoFileInput" type="file" accept="video/*" hidden></label>
+          <input id="videoUrlInput" type="url" placeholder="or paste YouTube / MP4 URL">
+          <button class="file-btn" id="useVideoUrlBtn" type="button">USE URL</button>
+        </div>
+        <button class="clear-task" id="clearTaskBtn" type="button">CLEAR TASK MEDIA</button>
+      </div>
+      <div class="task-preview" id="taskPreview">
+        <div class="task-empty">
+          <svg class="empty-image-icon" viewBox="0 0 120 100" aria-hidden="true"><rect x="12" y="10" width="96" height="80" rx="10" fill="#fff" stroke="#2c91ce" stroke-width="6"/><circle cx="81" cy="34" r="10" fill="#FFD31B"/><path d="M24 77 48 51l17 17 12-12 21 21z" fill="#56A328"/><path d="M24 77 48 51l17 17" fill="none" stroke="#3e9bd6" stroke-width="4" stroke-linejoin="round"/></svg>
+          Add a picture, video, GIF, or text here.
+        </div>
+      </div>
+    </div>
+
+    <div class="early-finisher-wrap" id="earlyFinisherWrap">
+      <div class="early-finisher-label" data-edit-key="titles.earlyFinisher">EARLY FINISHER</div>
+      <div class="early-finisher-text" id="earlyFinisherText" data-edit-key="earlyFinisher" data-placeholder="Type what students should do next..."></div>
+      <div class="early-finisher-size edit-only">
+        <button type="button" id="earlyFinisherSmaller">A−</button>
+        <button type="button" id="earlyFinisherBigger">A+</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel reminders" data-panel="reminders">
+    <div class="panel-tools edit-only">
+      <span>TITLE</span><button data-font-part="title" data-font-delta="-2">A−</button><button data-font-part="title" data-font-delta="2">A+</button>
+      <span>TEXT</span><button data-font-part="text" data-font-delta="-2">A−</button><button data-font-part="text" data-font-delta="2">A+</button>
+    </div>
+    <div class="panel-title">
+      <svg class="title-icon" viewBox="0 0 64 64" aria-hidden="true"><rect x="14" y="13" width="36" height="44" rx="5" fill="#fff" stroke="#000" stroke-width="3"/><rect x="22" y="7" width="20" height="12" rx="4" fill="#FFD31B" stroke="#000" stroke-width="3"/><path d="m21 31 4 4 7-8M21 44l4 4 7-8M36 31h9M36 44h9" fill="none" stroke="#56A328" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span data-edit-key="titles.reminders">REMINDERS</span>
+    </div>
+    <div class="reminder-list" id="reminderList"></div>
+    <div class="list-edit-bar edit-only">
+      <span>MARKER</span>
+      <button class="marker-choice" data-marker-target="reminders" data-marker="star" type="button">★</button>
+      <button class="marker-choice" data-marker-target="reminders" data-marker="bullet" type="button">•</button>
+      <button class="add-reminder" id="addReminderBtn" type="button">+ ADD</button>
+    </div>
+  </section>
+
+  <section class="panel bathroom compact-bathroom" id="bathroomPanel" data-panel="bathroom">
+    <div class="panel-tools edit-only">
+      <span>TITLE</span><button data-font-part="title" data-font-delta="-2">A−</button><button data-font-part="title" data-font-delta="2">A+</button>
+      <span>TEXT</span><button data-font-part="text" data-font-delta="-2">A−</button><button data-font-part="text" data-font-delta="2">A+</button>
+    </div>
+    <div class="panel-title bathroom-title"><span data-edit-key="titles.bathroom">BATHROOM + WATER</span></div>
+    <div class="bathroom-current-zone">
+      <div id="bathroomCurrent" class="bathroom-current is-empty"></div>
+    </div>
+    <div class="bathroom-bottom-row">
+      <div class="table-grid one-row" id="tableGrid">
+        <button class="table-btn" data-key="pink" style="--c:#F3237C;--soft:#FFD5E7"><span data-table-label="pink">PINK</span></button>
+        <button class="table-btn" data-key="orange" style="--c:#F47607;--soft:#FFE0C6"><span data-table-label="orange">ORANGE</span></button>
+        <button class="table-btn" data-key="yellow" style="--c:#FAB910;--soft:#FFF3AD"><span data-table-label="yellow">YELLOW</span></button>
+        <button class="table-btn" data-key="green" style="--c:#56A328;--soft:#D9EFCF"><span data-table-label="green">GREEN</span></button>
+        <button class="table-btn" data-key="blue" style="--c:#22B8F4;--soft:#D5F0FE"><span data-table-label="blue">BLUE</span></button>
+        <button class="table-btn" data-key="purple" style="--c:#7618CF;--soft:#E7DCF6"><span data-table-label="purple">PURPLE</span></button>
+      </div>
+      <div class="bathroom-actions">
+        <button class="mini-btn" id="bathNextBtn" type="button">NEXT</button>
+        <button class="mini-btn" id="bathResetBtn" type="button">RESET</button>
+      </div>
+    </div>
+  </section>
+
+
+  <a class="dashboard-nav grouper-nav" href="./grouper.html">RAINBOW GROUPER</a>
+  <a class="page-arrow page-arrow-right" href="./cleanup.html" aria-label="Open clean up board">→</a>
+
+  <div class="grade-switch" aria-label="Grade profile">
+    <button class="grade-btn" data-grade="first" type="button">1ST GRADE</button>
+    <button class="grade-btn" data-grade="second" type="button">2ND GRADE</button>
+  </div>
+
+  <div class="utilities">
+    <span class="save-status" id="saveStatus">SAVED</span>
+    <button class="utility" id="editToggle" type="button">EDIT</button>
+  </div>
+</div>
+<script src="./app.js"></script>
+</body>
+</html>
