@@ -31,7 +31,7 @@ function defaultState() {
       voice:"VOICE LEVEL",
       countdown:"TIME LEFT",
       task:"TASK OF THE DAY",
-      reminders:"REMINDERS",
+      reminders:"STEPS",
       bathroom:"BATHROOM + WATER"
     },
     objective:"",
@@ -422,17 +422,18 @@ async function renderChecklist({
 
   for(let i=0;i<list.length;i++) {
     const item = list[i];
+    const blank = !String(item.text || "").trim();
+    if(!editMode && blank) continue;
 
     let savedPic = null;
     if(showPictures) {
       savedPic = await listMediaGet(mediaKind, activeGrade, item.id).catch(()=>null);
     }
     const hasImage = !!savedPic?.blob;
-    const blank = !String(item.text || "").trim();
 
     const pictureHtml = showPictures ? `
       <div class="${picClass}-wrap">
-        <div class="${picClass}-placeholder">+ PIC</div>
+        <div class="${picClass}-placeholder">${editMode ? '+ PIC' : ''}</div>
         <button class="${picClass}-button" type="button" aria-label="Add or change picture"></button>
         <button class="${picClass}-remove" type="button" aria-label="Remove picture">×</button>
         <input class="${picClass}-input" type="file" accept="image/*">
@@ -540,6 +541,7 @@ $("#addSuccessBtn").addEventListener("click", async e => {
   saveState();
   await renderAllLists();
   focusNewestListRow("#successList",".step-text");
+  updateListVisibility();
 });
 $("#addReminderBtn").addEventListener("click", async e => {
   e.preventDefault();
@@ -549,6 +551,7 @@ $("#addReminderBtn").addEventListener("click", async e => {
   saveState();
   await renderAllLists();
   focusNewestListRow("#reminderList",".reminder-text");
+  updateListVisibility();
 });
 
 /* Early Finisher */

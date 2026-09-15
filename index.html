@@ -18,7 +18,6 @@
     <div class="learning-grid" id="learningGrid">
       <div class="learning-section objective-section">
         <div class="learning-title">
-          <svg class="title-icon" viewBox="0 0 64 64" aria-hidden="true"><circle cx="29" cy="35" r="21" fill="#fff" stroke="#000" stroke-width="3"/><circle cx="29" cy="35" r="15" fill="#F3237C"/><circle cx="29" cy="35" r="9" fill="#fff"/><circle cx="29" cy="35" r="4" fill="#F3237C"/><path d="M34 29 52 11" stroke="#1675E8" stroke-width="5" stroke-linecap="round"/><path d="m45 10 11-2-2 11-7 1z" fill="#22B8F4" stroke="#000" stroke-width="2"/></svg>
           <span data-edit-key="titles.objective">OBJECTIVE</span>
         </div>
         <div class="objective-content">
@@ -31,6 +30,7 @@
 
       <div class="learning-section success-section" id="successSection">
         <div class="learning-title">
+          <svg class="title-icon title-icon-trophy" viewBox="0 0 64 64" aria-hidden="true"><path d="M20 14h24v8c0 10-4 17-12 21-8-4-12-11-12-21z" fill="#FFD31B" stroke="#000" stroke-width="3"/><path d="M20 18H10c0 9 4 14 12 16M44 18h10c0 9-4 14-12 16" fill="none" stroke="#000" stroke-width="3" stroke-linecap="round"/><path d="M28 43h8v7h8v6H20v-6h8z" fill="#F9A602" stroke="#000" stroke-width="3"/></svg>
           <span data-edit-key="titles.success">SUCCESS CRITERIA</span>
         </div>
         <div class="success-content">
@@ -64,7 +64,7 @@
       <span>TITLE</span><button data-font-part="title" data-font-delta="-2">A−</button><button data-font-part="title" data-font-delta="2">A+</button>
       <span>TEXT</span><button data-font-part="text" data-font-delta="-2">A−</button><button data-font-part="text" data-font-delta="2">A+</button>
     </div>
-    <div class="panel-title"><span data-edit-key="titles.voice">VOICE LEVEL</span></div>
+    <div class="panel-title"><svg class="title-icon title-icon-shhh" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="23" fill="#FFD8A8" stroke="#000" stroke-width="3"/><circle cx="24" cy="28" r="3" fill="#000"/><circle cx="40" cy="28" r="3" fill="#000"/><path d="M24 40c4 3 12 3 16 0" fill="none" stroke="#000" stroke-width="3" stroke-linecap="round"/><path d="M37 18c4 4 6 8 6 14" fill="none" stroke="#000" stroke-width="3" stroke-linecap="round"/><rect x="30" y="19" width="6" height="24" rx="3" fill="#fff" stroke="#000" stroke-width="3"/></svg><span data-edit-key="titles.voice">VOICE LEVEL</span></div>
     <div class="voice-buttons" id="voiceButtons">
       <button class="voice-btn" data-level="0" style="--vc:#F3237C">0</button>
       <button class="voice-btn" data-level="1" style="--vc:#F47607">1</button>
@@ -153,7 +153,7 @@
       <span>TITLE</span><button data-font-part="title" data-font-delta="-2">A−</button><button data-font-part="title" data-font-delta="2">A+</button>
       <span>TEXT</span><button data-font-part="text" data-font-delta="-2">A−</button><button data-font-part="text" data-font-delta="2">A+</button>
     </div>
-    <div class="panel-title bathroom-title"><span data-edit-key="titles.bathroom">BATHROOM + WATER</span></div>
+    <div class="panel-title bathroom-title"><svg class="title-icon title-icon-bathroom" viewBox="0 0 64 64" aria-hidden="true"><rect x="9" y="10" width="46" height="44" rx="7" fill="#fff" stroke="#000" stroke-width="3"/><circle cx="24" cy="20" r="4" fill="#22B8F4"/><path d="M24 26v16M18 32h12M24 42h-6M24 42h6" stroke="#22B8F4" stroke-width="4" stroke-linecap="round"/><circle cx="42" cy="20" r="4" fill="#F3237C"/><path d="M42 26v16M36 32h12M42 42h-6l6 8 6-8h-6" stroke="#F3237C" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg><span data-edit-key="titles.bathroom">BATHROOM + WATER</span></div>
     <div class="bathroom-current-zone">
       <div id="bathroomCurrent" class="bathroom-current is-empty"></div>
     </div>
@@ -184,6 +184,7 @@
 
   <div class="utilities">
     <span class="save-status" id="saveStatus">SAVED</span>
+    <button class="utility" id="fullscreenToggle" type="button">FULL SCREEN</button>
     <button class="utility" id="editToggle" type="button">EDIT</button>
   </div>
 </div>

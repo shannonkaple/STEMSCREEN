@@ -1,28 +1,5 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Clean Up</title>
-<link rel="stylesheet" href="./cleanup.css">
-</head>
-<body>
-  <a class="back-arrow" href="./index.html" aria-label="Back to task screen">←</a>
-  <main class="cleanup-shell">
-    <h1>CLEAN UP</h1>
-    <img class="cleanup-steps" src="./cleanup-steps.png" alt="Clean up steps">
-    <video id="cleanupSong" class="cleanup-video" src="./cleanup-song.mp4" controls autoplay preload="auto" playsinline></video>
-  </main>
-<script>
-(() => {
-  const video = document.getElementById("cleanupSong");
-  if(!video) return;
-  video.volume = 1;
-  const tryPlay = () => video.play().catch(() => {});
-  tryPlay();
-  window.addEventListener("load", tryPlay, {once:true});
-  document.addEventListener("pointerdown", tryPlay, {once:true});
-})();
-</script>
-</body>
-</html>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Clean Up</title><style>
+@font-face{font-family:"KAHomebodyClub";src:url("./KAHomebodyClub.ttf") format("truetype");font-display:swap}
+@font-face{font-family:"VAGTaskscreen";src:url("./VAG-Rounded-Std-Black_47296.ttf") format("truetype");font-display:swap}
+:root{--pink:#F3237C;--orange:#F47607;--yellow:#FAB910;--green:#56A328;--blue:#22B8F4;--purple:#7618CF}
+*{box-sizing:border-box}body{margin:0;background:#efefef;font-family:"VAGTaskscreen",system-ui,sans-serif}button,a{font:inherit}.shell{position:relative;min-height:100vh;padding:18px 24px 22px;border:12px solid var(--pink);border-radius:42px;background:#efefef;overflow:hidden}.shell:before,.shell:after{content:"";position:absolute;inset:12px;border-radius:34px;border:8px solid var(--orange)}.shell:after{inset:24px;border-color:var(--yellow)}.ring{position:absolute;inset:36px;border:8px solid var(--green);border-radius:28px;pointer-events:none}.ring2{position:absolute;inset:48px;border:8px solid var(--blue);border-radius:24px;pointer-events:none}.ring3{position:absolute;inset:60px;border:8px solid var(--purple);border-radius:20px;pointer-events:none}.back,.fs{position:absolute;z-index:4;display:grid;place-items:center;width:46px;height:46px;border:3px solid #2d2940;border-radius:16px;background:#fff;color:#2d2940;text-decoration:none;box-shadow:0 2px 7px rgba(0,0,0,.15)}.back{left:34px;top:50%;transform:translateY(-50%)}.fs{right:28px;top:24px;width:auto;padding:0 14px;font-size:15px;font-weight:900}.top{position:relative;z-index:3;display:flex;justify-content:flex-end;align-items:flex-start;gap:18px;padding:8px 70px 0 70px;min-height:150px}.title{color:#FAB910;-webkit-text-stroke:3px #000;font-family:"KAHomebodyClub","VAGTaskscreen",sans-serif;font-size:clamp(54px,7vw,102px);line-height:.9;text-shadow:0 2px 0 rgba(255,255,255,.8);align-self:flex-start;margin-top:24px}.video{width:min(420px,33vw);aspect-ratio:16/9;border:4px solid #000;border-radius:18px;overflow:hidden;box-shadow:0 8px 18px rgba(0,0,0,.18);background:#000;flex:0 0 auto}.video video{width:100%;height:100%;display:block}.steps-wrap{position:relative;z-index:2;margin:16px 72px 0 72px;border:8px solid #000;border-radius:34px;background:#fff;padding:26px 28px 34px;min-height:370px}.steps-img{display:block;width:100%;max-height:420px;object-fit:contain;object-position:center top}.bottom-space{height:30px}@media(max-width:1000px){.top{padding-inline:66px;gap:12px}.title{font-size:48px}.video{width:300px}.steps-wrap{margin-inline:60px}}</style></head><body><main class="shell"><div class="ring"></div><div class="ring2"></div><div class="ring3"></div><a class="back" href="./index.html" aria-label="Back to task screen">←</a><button class="fs" id="fsBtn" type="button">FULL SCREEN</button><div class="top"><div class="title">CLEAN UP</div><div class="video"><video id="cleanupSong" src="./cleanup-song.mp4" controls autoplay preload="auto" playsinline></video></div></div><div class="steps-wrap"><img class="steps-img" src="./cleanup-steps.png" alt="Clean up steps"></div><div class="bottom-space"></div></main><script>(()=>{const v=document.getElementById('cleanupSong');const tryPlay=()=>v&&v.play().catch(()=>{});window.addEventListener('load',tryPlay,{once:true});document.addEventListener('pointerdown',tryPlay,{once:true});const fsBtn=document.getElementById('fsBtn');fsBtn.addEventListener('click',async()=>{if(!document.fullscreenElement){await document.documentElement.requestFullscreen?.().catch(()=>{});fsBtn.textContent='EXIT FULL SCREEN'}else{await document.exitFullscreen?.().catch(()=>{});fsBtn.textContent='FULL SCREEN'}});document.addEventListener('fullscreenchange',()=>{fsBtn.textContent=document.fullscreenElement?'EXIT FULL SCREEN':'FULL SCREEN'});})();</script></body></html>

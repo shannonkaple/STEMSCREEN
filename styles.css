@@ -687,3 +687,39 @@ body.edit-mode .reminder-row.is-new-row{
   }
   .task-loop-toggle{font-size:8px;padding:3px 6px}
 }
+
+
+/* ==== v26 refinements ==== */
+.board{position:relative}
+.learning-grid{grid-template-columns:minmax(360px,1.08fr) 8px minmax(430px,1.72fr)!important}
+.objective-content{grid-template-columns:1fr!important;display:flex!important;flex-direction:column!important;align-items:center!important;gap:10px!important;padding-top:4px}
+.objective-content .section-icon-slot{width:110px!important;height:110px!important;margin:0 auto!important}
+.objective-input{width:100%!important;max-width:none!important;min-height:190px!important;justify-self:center!important}
+.success-section .learning-title,.objective-section .learning-title{justify-content:center}
+.success-content .success-list{display:flex;flex-direction:column;gap:8px;max-height:220px;overflow:auto;padding-right:4px}
+.step-row,.reminder-row{grid-template-columns:28px 86px minmax(0,1fr) 30px!important;align-items:center!important;min-height:82px}
+.step-row.no-image,.reminder-row.no-image{grid-template-columns:28px minmax(0,1fr) 30px!important}
+.step-pic-wrap,.reminder-pic-wrap{width:78px;height:78px;border-radius:10px}
+.step-pic,.reminder-pic{width:78px;height:78px;border-radius:10px;object-fit:cover}
+.step-text,.reminder-text{min-height:66px!important;font-size:clamp(17px,1.35vw,26px)!important;line-height:1.1!important}
+.list-marker{font-size:clamp(22px,1.5vw,28px)!important}
+.panel-title .title-icon,.learning-title .title-icon{width:1.08em!important;height:1.08em!important}
+.voice .panel-title,.bathroom .panel-title{justify-content:center}
+.voice-label{animation:none}
+#bathroomCurrent{min-height:70px;font-size:clamp(28px,2.2vw,40px)!important;display:flex;align-items:center;justify-content:center}
+.fullscreen-btn,.utility#fullscreenToggle{white-space:nowrap}
+body.view-mode .step-row.is-blank,body.view-mode .reminder-row.is-blank{display:none!important}
+body.view-mode .step-pic-wrap .step-pic-placeholder,body.view-mode .reminder-pic-wrap .reminder-pic-placeholder,body.view-mode .step-pic-wrap .step-pic-button,body.view-mode .reminder-pic-wrap .reminder-pic-button,body.view-mode .step-pic-wrap .step-pic-remove,body.view-mode .reminder-pic-wrap .reminder-pic-remove{display:none!important}
+body.view-mode .step-row.no-image .step-pic-wrap,body.view-mode .reminder-row.no-image .reminder-pic-wrap{display:none!important}
+body.view-mode .step-row.no-image,body.view-mode .reminder-row.no-image{grid-template-columns:28px minmax(0,1fr)!important}
+body.view-mode .step-remove,body.view-mode .reminder-remove{display:none!important}
+body.edit-mode .step-remove,body.edit-mode .reminder-remove{display:grid!important}
+.panel.fullscreen-panel{position:fixed!important;inset:16px!important;z-index:9999!important;margin:0!important;width:auto!important;height:auto!important;max-height:none!important;overflow:auto!important;background:inherit!important;box-shadow:0 12px 40px rgba(0,0,0,.28)}
+.panel.fullscreen-panel .panel-tools{position:sticky;top:0;z-index:5;background:rgba(255,255,255,.9)}
+.panel-tools .fs-panel-btn{margin-left:auto;border:2px solid #000;border-radius:999px;background:#fff;padding:3px 9px;font-size:10px;font-weight:900}
+@media(max-width:900px){
+ .objective-input{width:100%!important;min-height:140px!important}
+ .objective-content .section-icon-slot{width:82px!important;height:82px!important}
+ .step-row,.reminder-row{grid-template-columns:22px 64px minmax(0,1fr) 24px!important;min-height:68px}
+ .step-pic-wrap,.reminder-pic-wrap,.step-pic,.reminder-pic{width:58px;height:58px}
+}

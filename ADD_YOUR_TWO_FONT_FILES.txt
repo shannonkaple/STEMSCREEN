@@ -1,7 +1,0 @@
-ADD THESE TWO FONT FILES TO THE ROOT OF YOUR NEW GITHUB REPO:
-
-KAHomebodyClub.ttf
-VAG-Rounded-Std-Black_47296.ttf
-
-They are intentionally not included in this ZIP.
-Everything else needed for the site is included here.
