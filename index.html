@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>STEM Task Screen</title>
-<link rel="stylesheet" href="./styles.css?v=29">
+<link rel="stylesheet" href="./styles.css?v=31">
 </head>
 <body>
 <div class="board" id="board">
@@ -56,6 +56,16 @@
       <span data-edit-key="titles.countdown">TIME LEFT</span>
     </div>
     <div class="countdown-display" id="countdownDisplay">--:--</div>
+    <div class="period-presets" aria-label="Class period end times">
+      <button type="button" class="period-btn" data-end-time="09:03">2A</button>
+      <button type="button" class="period-btn" data-end-time="09:43">2B</button>
+      <button type="button" class="period-btn" data-end-time="10:33">2C</button>
+      <button type="button" class="period-btn" data-end-time="11:13">2D</button>
+      <button type="button" class="period-btn" data-end-time="12:47">1A</button>
+      <button type="button" class="period-btn" data-end-time="13:27">1B</button>
+      <button type="button" class="period-btn" data-end-time="14:17">1C</button>
+      <button type="button" class="period-btn" data-end-time="14:20">1D</button>
+    </div>
     <input id="endTimeInput" class="end-time-input" type="time" aria-label="Time class ends" title="Time class ends">
   </section>
 
@@ -188,6 +198,6 @@
     <button class="utility" id="editToggle" type="button">EDIT</button>
   </div>
 </div>
-<script src="./app.js?v=29"></script>
+<script src="./app.js?v=31"></script>
 </body>
 </html>

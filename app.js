@@ -291,6 +291,7 @@ $$(".grade-btn").forEach(btn => btn.addEventListener("click", () => switchGrade(
 $("#objectiveInput").addEventListener("input", e => {
   state.objective = e.target.value;
   saveState();
+  fitObjectiveText();
 });
 
 /* Voice */
@@ -351,10 +352,48 @@ endTimeInput.addEventListener("input", () => {
   saveState();
   updateClassCountdown();
 });
+
+function updatePeriodButtons() {
+  $$(".period-btn").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.endTime === (state.countdown?.endTime || ""));
+  });
+}
+$$(".period-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const time = btn.dataset.endTime;
+    state.countdown.endTime = time;
+    endTimeInput.value = time;
+    saveState();
+    updatePeriodButtons();
+    updateClassCountdown();
+  });
+});
+
 function startClassCountdownClock() {
   clearInterval(classCountdownTimer);
   updateClassCountdown();
   classCountdownTimer = setInterval(updateClassCountdown,250);
+}
+
+
+function fitTextareaToBox(el, maxPx, minPx) {
+  if(!el) return;
+  el.style.fontSize = `${maxPx}px`;
+  let size = maxPx;
+  while(size > minPx && (el.scrollHeight > el.clientHeight + 1 || el.scrollWidth > el.clientWidth + 1)) {
+    size -= 1;
+    el.style.fontSize = `${size}px`;
+  }
+}
+function fitObjectiveText() {
+  const el = $("#objectiveInput");
+  if(!el) return;
+  const max = Math.max(18, Math.min(28, window.innerWidth * .015));
+  fitTextareaToBox(el, max, 17);
+}
+function fitChecklistText() {
+  $$(".step-text").forEach(el => fitTextareaToBox(el, parseFloat(getComputedStyle(el).fontSize) || 18, 10));
+  $$(".reminder-text").forEach(el => fitTextareaToBox(el, parseFloat(getComputedStyle(el).fontSize) || 21, 10));
 }
 
 /* Success Criteria + Reminders */
@@ -435,6 +474,9 @@ async function renderChecklist({
   const container = $(containerId);
   container.innerHTML = "";
 
+  const visibleItems = editMode ? list : list.filter(item => String(item.text || "").trim());
+  container.dataset.count = String(Math.max(1, Math.min(6, visibleItems.length || 1)));
+
   for(let i=0;i<list.length;i++) {
     const item = list[i];
     const blank = !String(item.text || "").trim();
@@ -501,6 +543,7 @@ async function renderChecklist({
       row.classList.toggle("is-blank", !input.value.trim());
       saveState();
       updateListVisibility();
+      fitTextareaToBox(input, parseFloat(getComputedStyle(input).fontSize) || 18, 10);
     });
 
     remove.addEventListener("click", async () => {
@@ -547,6 +590,10 @@ async function renderAllLists() {
   updateListVisibility();
   applyPanelFont("learning");
   applyPanelFont("reminders");
+  requestAnimationFrame(() => {
+    fitObjectiveText();
+    fitChecklistText();
+  });
 }
 $("#addSuccessBtn").addEventListener("click", async e => {
   e.preventDefault();
@@ -936,6 +983,7 @@ async function renderAll() {
   renderEarlyFinisher();
   $("#objectiveInput").value = state.objective || "";
   endTimeInput.value = state.countdown?.endTime || "";
+  updatePeriodButtons();
   startClassCountdownClock();
   renderVoice();
   await renderSectionIcons();
@@ -943,11 +991,19 @@ async function renderAll() {
   renderTableLabels();
   await renderTask();
   applyAllFonts();
+  requestAnimationFrame(() => {
+    fitObjectiveText();
+    fitChecklistText();
+  });
 }
 let resizeTimer;
 window.addEventListener("resize", () => {
   clearTimeout(resizeTimer);
-  resizeTimer = setTimeout(applyAllFonts,120);
+  resizeTimer = setTimeout(() => {
+    applyAllFonts();
+    fitObjectiveText();
+    fitChecklistText();
+  },120);
 });
 
 state = loadState(activeGrade);
