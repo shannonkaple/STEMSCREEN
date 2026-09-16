@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Clean Up</title>
-<link rel="icon" type="image/png" href="./star.png?v=38">
+<link rel="icon" type="image/png" href="./star.png?v=39">
 <style>
 @font-face{font-family:"KAHomebodyClub";src:url("./KAHomebodyClub.ttf") format("truetype");font-display:swap}
 @font-face{font-family:"VAGTaskscreen";src:url("./VAG-Rounded-Std-Black_47296.ttf") format("truetype");font-display:swap}
@@ -215,7 +215,7 @@ body.presentation-mode{
   flex-direction:column!important;
   align-items:center!important;
   justify-content:center!important;
-  font-size:clamp(150px,15vw,300px)!important;
+  font-size:clamp(105px,10.5vw,205px)!important;
   line-height:.62!important;
   white-space:normal!important;
   overflow:hidden!important;
@@ -234,14 +234,14 @@ body.presentation-mode{
 body.presentation-mode{position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important}
 @media(max-width:1000px){
  .top-row{grid-template-columns:minmax(0,1fr) minmax(320px,40vw)!important;gap:12px!important}
- .cleanup-title{font-size:clamp(105px,13vw,210px)!important}
+ .cleanup-title{font-size:clamp(82px,9.5vw,155px)!important}
 }
 
 </style>
 </head>
 
 <body>
-<a class="back-arrow" href="./index.html?v=38" aria-label="Back to Task Screen">←</a>
+<a class="back-arrow" href="./index.html?v=39" aria-label="Back to Task Screen">←</a>
 <button class="fullscreen-btn" id="cleanupFullscreen" type="button">FULL SCREEN</button>
 
 <main class="cleanup-shell">
@@ -271,16 +271,18 @@ body.presentation-mode{position:fixed!important;inset:0!important;width:100vw!im
   document.addEventListener("pointerdown", tryPlay, {once:true});
 
   const isTypingTarget = el =>
-    !!el && (el.matches?.("input,textarea,select,button") || el.isContentEditable);
+    !!el && (el.matches?.("input,textarea,select") || el.isContentEditable);
 
-  /* SPACEBAR instantly pauses/resumes the clean-up song. */
-  document.addEventListener("keydown", e => {
-    if(e.code !== "Space" || isTypingTarget(e.target)) return;
+  /* SPACEBAR always pauses/resumes the clean-up song, even if a button
+     or the video controls currently have focus. */
+  window.addEventListener("keydown", e => {
+    if((e.code !== "Space" && e.key !== " ") || isTypingTarget(e.target)) return;
     e.preventDefault();
+    e.stopPropagation();
     if(!video) return;
     if(video.paused) video.play().catch(()=>{});
     else video.pause();
-  });
+  }, true);
 
   const isFs = () => !!(document.fullscreenElement || document.webkitFullscreenElement);
 
@@ -313,23 +315,29 @@ body.presentation-mode{position:fixed!important;inset:0!important;width:100vw!im
     fs.textContent = isFs() ? "EXIT FULL SCREEN" : "FULL SCREEN";
   });
 
+  const embedded = new URLSearchParams(location.search).get("embedded")==="1" || window.parent!==window;
   const go = url => {
+    if(embedded){ window.parent.postMessage({type:"stem-overlay-close"},"*"); return; }
     if(isFs() || document.body.classList.contains("presentation-mode")){
       try{sessionStorage.setItem("stemPresentationMode","1")}catch(e){};
     }
     window.location.href = url;
   };
+  window.addEventListener("message", e => {
+    if(e.data?.type === "stem-overlay-show") video?.play().catch(()=>{});
+  });
+  if(embedded && fs) fs.style.display="none";
 
   document.querySelector(".back-arrow")?.addEventListener("click", e => {
     e.preventDefault();
-    go("./index.html?v=38");
+    go("./index.html?v=39");
   });
 
   document.addEventListener("keydown", e => {
     if(isTypingTarget(e.target)) return;
     if(e.key === "ArrowLeft"){
       e.preventDefault();
-      go("./index.html?v=38");
+      go("./index.html?v=39");
     }
   });
 
@@ -343,6 +351,7 @@ body.presentation-mode{position:fixed!important;inset:0!important;width:100vw!im
 (()=>{
   document.body.classList.add("presentation-mode");
   try{try{sessionStorage.setItem("stemPresentationMode","1")}catch(e){}}catch(e){}
+  if(new URLSearchParams(location.search).get("embedded")==="1" || window.parent!==window)return;
   let asked=false;
   const ask=async()=>{
     if(asked||document.fullscreenElement||document.webkitFullscreenElement)return;

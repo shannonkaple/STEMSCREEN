@@ -1850,3 +1850,267 @@ body.edit-mode .page-arrow{display:none!important}
     font-size:clamp(50px,5.8vw,82px) !important;
   }
 }
+
+
+/* ============================================================
+   v39 — notebook background + final projector refinements
+   ============================================================ */
+
+/* Composition-notebook print behind every dashboard panel. */
+html,body,.board{
+  background-color:#111 !important;
+  background-image:url("./notebook-bg.jpg") !important;
+  background-repeat:repeat !important;
+  background-size:300px 300px !important;
+}
+.board{background-position:center !important}
+
+/* TIMER: larger clock, all 8 presets on one line.
+   The manual time field is Edit-mode only. */
+.countdown-panel{
+  gap:4px !important;
+  padding:6px 8px !important;
+}
+.countdown-display{
+  width:95% !important;
+  min-height:74px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  font-size:clamp(44px,4.35vw,76px) !important;
+  line-height:.9 !important;
+}
+.period-presets{
+  width:100% !important;
+  display:grid !important;
+  grid-template-columns:repeat(8,27px) !important;
+  grid-template-rows:27px !important;
+  gap:4px !important;
+  justify-content:center !important;
+  align-items:center !important;
+}
+.period-btn{
+  width:27px !important;
+  height:27px !important;
+  min-width:27px !important;
+  font-size:8px !important;
+}
+.end-time-input{display:none !important}
+body.edit-mode .end-time-input{
+  display:block !important;
+  width:72% !important;
+  height:21px !important;
+  min-height:21px !important;
+  margin-top:0 !important;
+}
+
+/* VOICE: bigger wording, but selected number never leaves purple box. */
+.voice{
+  overflow:hidden !important;
+  padding:5px 6px 5px !important;
+}
+.voice-buttons{
+  overflow:hidden !important;
+  padding:8px 8px 7px !important;
+  margin-top:2px !important;
+  gap:3px !important;
+}
+.voice-btn{
+  font-size:clamp(18px,1.7vw,30px) !important;
+}
+.voice-btn.active{
+  transform:scale(1.15) !important;
+  animation:voicePulseSafe 1s ease-in-out infinite !important;
+  box-shadow:inset 0 0 0 3px #fff,0 3px 0 rgba(0,0,0,.18) !important;
+}
+.voice-label{
+  font-size:clamp(27px,2.35vw,43px) !important;
+  line-height:.88 !important;
+  min-height:38px !important;
+  padding:0 3px 2px !important;
+}
+@keyframes voicePulseSafe{
+  0%,100%{transform:scale(1.12);filter:brightness(1)}
+  50%{transform:scale(1.18);filter:brightness(1.08)}
+}
+
+/* BLUE TASK: MEDIA LEFT / DIRECTIONS RIGHT. */
+.task-content-grid{
+  grid-template-columns:minmax(0,68%) minmax(180px,32%) !important;
+  gap:9px !important;
+}
+.task-stage{
+  grid-column:1 !important;
+  grid-row:1 !important;
+}
+.task-sub{
+  grid-column:2 !important;
+  grid-row:1 !important;
+}
+.task-preview img,
+.task-preview video,
+.task-preview iframe{
+  object-fit:contain !important;
+}
+
+/* EARLY FINISHERS: one shared square media space on the left. */
+.reminders{
+  overflow:hidden !important;
+}
+.early-content-grid{
+  flex:1;
+  min-height:0;
+  display:grid;
+  grid-template-columns:minmax(108px,29%) minmax(0,1fr);
+  gap:8px;
+  overflow:hidden;
+}
+.early-media-slot{
+  position:relative;
+  min-width:0;
+  min-height:0;
+  aspect-ratio:1/1;
+  align-self:center;
+  justify-self:stretch;
+  max-height:100%;
+  border:3px solid rgba(0,0,0,.38);
+  border-radius:15px;
+  background:#fff;
+  overflow:hidden;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.early-media-placeholder{
+  text-align:center;
+  font-size:clamp(10px,.85vw,14px);
+  line-height:1.05;
+  color:#777;
+}
+body:not(.edit-mode) .early-media-slot:not(.has-media) .early-media-placeholder{
+  color:transparent;
+}
+.early-media-slot img,
+.early-media-slot video{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  background:#fff;
+}
+.early-media-slot video{object-position:center}
+.early-media-button{
+  position:absolute;
+  left:50%;
+  bottom:5px;
+  transform:translateX(-50%);
+  z-index:4;
+  border:2px solid #000;
+  border-radius:999px;
+  background:#fff;
+  padding:3px 8px;
+  font-size:8px;
+  font-weight:900;
+  white-space:nowrap;
+}
+.early-media-remove{
+  position:absolute;
+  top:4px;
+  right:4px;
+  z-index:5;
+  width:23px;
+  height:23px;
+  border:2px solid #000;
+  border-radius:50%;
+  background:#fff;
+  padding:0;
+  font-size:15px;
+  line-height:17px;
+  display:none;
+}
+body.edit-mode .early-media-slot.has-media .early-media-remove{display:block}
+.early-text-column{
+  min-width:0;
+  min-height:0;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+}
+.early-text-column .reminder-list{
+  flex:1;
+  min-height:0;
+  display:grid !important;
+  gap:5px !important;
+  overflow:hidden !important;
+}
+.reminder-row,
+body.edit-mode .reminder-row,
+body.edit-mode .reminder-row.no-image,
+body.edit-mode .reminder-row.has-image{
+  grid-template-columns:27px minmax(0,1fr) 24px !important;
+  gap:5px !important;
+  padding:3px 6px !important;
+  min-height:0 !important;
+  overflow:hidden !important;
+}
+.reminder-row .reminder-pic-wrap{display:none !important}
+.reminder-list .list-marker{
+  align-self:center !important;
+  justify-self:center !important;
+  display:grid !important;
+  place-items:center !important;
+}
+.reminder-text{
+  min-height:0 !important;
+  max-height:none !important;
+  width:100% !important;
+  height:100% !important;
+  overflow:hidden !important;
+  text-align:left !important;
+  padding:6px 5px 2px !important;
+}
+.reminder-list[data-count="1"]{grid-template-rows:minmax(0,1fr) !important}
+.reminder-list[data-count="2"]{grid-template-rows:repeat(2,minmax(0,1fr)) !important}
+.reminder-list[data-count="3"]{grid-template-rows:repeat(3,minmax(0,1fr)) !important}
+.reminder-list[data-count="4"]{grid-template-rows:repeat(4,minmax(0,1fr)) !important}
+.reminder-list[data-count="5"]{grid-template-rows:repeat(5,minmax(0,1fr)) !important}
+
+/* Bathroom stays WHITE until a table is actually selected. */
+.bathroom{
+  background:#fff;
+}
+
+/* Overlay pages live inside the Task Screen document.
+   Native fullscreen therefore remains active while switching pages. */
+.page-overlay{
+  position:fixed;
+  inset:0;
+  z-index:999999;
+  display:none;
+  background:#fff;
+}
+.page-overlay.active{display:block}
+.page-frame{
+  width:100%;
+  height:100%;
+  border:0;
+  display:none;
+  background:#fff;
+}
+.page-frame.active{display:block}
+
+/* Keep tiny footer controls legible against notebook print. */
+.grade-switch,.utilities,.dashboard-nav{
+  filter:drop-shadow(0 1px 2px rgba(255,255,255,.85));
+}
+
+@media(max-width:1100px){
+  .period-presets{
+    grid-template-columns:repeat(8,24px) !important;
+    grid-template-rows:24px !important;
+    gap:3px !important;
+  }
+  .period-btn{width:24px !important;height:24px !important;min-width:24px !important}
+  .early-content-grid{grid-template-columns:minmax(92px,27%) minmax(0,1fr)}
+}

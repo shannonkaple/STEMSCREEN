@@ -64,9 +64,7 @@ function defaultState() {
       {id:"s3",text:""}
     ],
     reminders:[
-      {id:"r1",text:""},
-      {id:"r2",text:""},
-      {id:"r3",text:""}
+      {id:"r1",text:""}
     ],
     bathroom:{
       doorbellText:"RING THE DOORBELL TO RETURN",
@@ -122,6 +120,12 @@ function loadState(grade) {
   if(typeof merged.objectiveTextAdjust !== "number") merged.objectiveTextAdjust = 0;
   if(typeof merged.earlyFinisher !== "string") merged.earlyFinisher = "";
   if(typeof merged.earlyFinisherFontAdjust !== "number") merged.earlyFinisherFontAdjust = 0;
+  if(!Array.isArray(merged.reminders)) merged.reminders = [{id:"r1",text:""}];
+  const reminderFilled = merged.reminders.filter(r => String(r?.text || "").trim());
+  const reminderBlank = merged.reminders.find(r => !String(r?.text || "").trim());
+  merged.reminders = [...reminderFilled];
+  if(reminderBlank) merged.reminders.push(reminderBlank);
+  if(!merged.reminders.length) merged.reminders.push({id:`r_${Date.now()}_blank`,text:""});
   if(!merged.fontAdjust.learning) merged.fontAdjust.learning = {title:0,text:0};
   if(!merged.fontAdjust.countdown) merged.fontAdjust.countdown = {title:0,text:0};
   return merged;
@@ -202,9 +206,10 @@ function listMediaKey(kind, grade, id) {
 async function listMediaPut(kind, grade, id, file) {
   const db = await openDb();
   const key = listMediaKey(kind, grade, id);
+  const mediaType = String(file?.type || "").startsWith("video/") ? "video" : "image";
   return new Promise((resolve,reject) => {
     const tx = db.transaction(STORE,"readwrite");
-    tx.objectStore(STORE).put({blob:file, kind:`${kind}-image`, name:file.name, mime:file.type}, key);
+    tx.objectStore(STORE).put({blob:file, kind:`${kind}-${mediaType}`, name:file.name, mime:file.type}, key);
     tx.oncomplete = resolve;
     tx.onerror = () => reject(tx.error);
   });
@@ -301,6 +306,7 @@ async function switchGrade(grade) {
   safeLocalSet(ACTIVE_GRADE_KEY, grade);
   state = loadState(grade);
   $$(".grade-btn").forEach(b => b.classList.toggle("active", b.dataset.grade === grade));
+  postGradeToGrouper();
   resetBathroom();
   await renderAll();
 }
@@ -380,7 +386,7 @@ function showCleanupPrompt() {
     </div>`;
   document.body.appendChild(overlay);
   $("#stayHereBtn").onclick = () => overlay.remove();
-  $("#goCleanupBtn").onclick = () => navigatePage("./cleanup.html?v=38");
+  $("#goCleanupBtn").onclick = () => { document.getElementById("cleanupPrompt")?.remove(); showOverlay("cleanup"); };
 }
 
 
@@ -628,6 +634,9 @@ async function renderChecklist({
     remove.addEventListener("click", async () => {
       if(showPictures) await listMediaDelete(mediaKind, activeGrade, item.id).catch(()=>{});
       state[listName].splice(i,1);
+      if(listName === "reminders" && !state.reminders.length) {
+        state.reminders.push({id:`r_${Date.now()}_blank`,text:""});
+      }
       saveState();
       await renderAllLists();
     });
@@ -652,6 +661,99 @@ function focusNewestListRow(containerSelector, textSelector) {
   setTimeout(()=>row.classList.remove("is-new-row"),1400);
 }
 
+
+let earlyMediaObjectUrl = "";
+
+async function putRawListMedia(kind, grade, id, record) {
+  const db = await openDb();
+  const key = listMediaKey(kind, grade, id);
+  return new Promise((resolve,reject) => {
+    const tx = db.transaction(STORE,"readwrite");
+    tx.objectStore(STORE).put(record, key);
+    tx.oncomplete = resolve;
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+async function migrateOldEarlyMediaIfNeeded() {
+  let shared = await listMediaGet("early-shared", activeGrade, "shared").catch(()=>null);
+  if(shared?.blob) return shared;
+  for(const item of (state.reminders || [])) {
+    if(!item?.id) continue;
+    const old = await listMediaGet("reminder", activeGrade, item.id).catch(()=>null);
+    if(old?.blob) {
+      await putRawListMedia("early-shared", activeGrade, "shared", {
+        blob:old.blob,
+        kind:(old.mime || "").startsWith("video/") ? "early-video" : "early-image",
+        name:old.name || "Early Finishers media",
+        mime:old.mime || old.blob.type || ""
+      }).catch(()=>{});
+      shared = await listMediaGet("early-shared", activeGrade, "shared").catch(()=>null);
+      break;
+    }
+  }
+  return shared;
+}
+
+async function renderEarlyMedia() {
+  const slot = $("#earlyMediaSlot");
+  if(!slot) return;
+  const button = $("#earlyMediaButton");
+  const remove = $("#earlyMediaRemove");
+  const input = $("#earlyMediaInput");
+
+  if(earlyMediaObjectUrl) {
+    URL.revokeObjectURL(earlyMediaObjectUrl);
+    earlyMediaObjectUrl = "";
+  }
+  slot.querySelectorAll("img,video").forEach(el => el.remove());
+
+  const rec = await migrateOldEarlyMediaIfNeeded();
+  const has = !!rec?.blob;
+  slot.classList.toggle("has-media", has);
+
+  if(has) {
+    earlyMediaObjectUrl = URL.createObjectURL(rec.blob);
+    if((rec.mime || rec.blob.type || "").startsWith("video/")) {
+      const v = document.createElement("video");
+      v.src = earlyMediaObjectUrl;
+      v.controls = true;
+      v.playsInline = true;
+      v.loop = true;
+      slot.prepend(v);
+    } else {
+      const img = document.createElement("img");
+      img.src = earlyMediaObjectUrl;
+      img.alt = "Early Finishers";
+      slot.prepend(img);
+    }
+  }
+
+  if(button && !button.dataset.bound) {
+    button.dataset.bound = "1";
+    button.addEventListener("click", () => {
+      if(editMode) input?.click();
+    });
+  }
+  if(input && !input.dataset.bound) {
+    input.dataset.bound = "1";
+    input.addEventListener("change", async () => {
+      const file = input.files?.[0];
+      if(!file) return;
+      await listMediaPut("early-shared", activeGrade, "shared", file);
+      await renderEarlyMedia();
+    });
+  }
+  if(remove && !remove.dataset.bound) {
+    remove.dataset.bound = "1";
+    remove.addEventListener("click", async e => {
+      e.stopPropagation();
+      await listMediaDelete("early-shared", activeGrade, "shared").catch(()=>{});
+      await renderEarlyMedia();
+    });
+  }
+}
+
 async function renderAllLists() {
   updateMarkerButtons();
   await renderChecklist({
@@ -664,8 +766,9 @@ async function renderAllLists() {
     listName:"reminders",containerId:"#reminderList",mediaKind:"reminder",
     rowClass:"reminder-row",picClass:"reminder-pic",
     textClass:"reminder-text",removeClass:"reminder-remove",
-    placeholder:"Type an early finisher...",markerTarget:"reminders",showPictures:true
+    placeholder:"Type an early finisher...",markerTarget:"reminders",showPictures:false
   });
+  await renderEarlyMedia();
   updateListVisibility();
   applyPanelFont("learning");
   applyPanelFont("reminders");
@@ -691,10 +794,13 @@ $("#addReminderBtn")?.addEventListener("click", async e => {
   e.stopPropagation();
   if(!editMode) setEditMode(true);
   if(!Array.isArray(state.reminders)) state.reminders = [];
-  const id = `r_${Date.now()}_${Math.random().toString(36).slice(2,7)}`;
-  state.reminders.push({id,text:""});
-  saveState();
-  await renderAllLists();
+  const existingBlank = state.reminders.findIndex(r => !String(r?.text || "").trim());
+  if(existingBlank < 0) {
+    const id = `r_${Date.now()}_${Math.random().toString(36).slice(2,7)}`;
+    state.reminders.push({id,text:""});
+    saveState();
+    await renderAllLists();
+  }
   requestAnimationFrame(() => focusNewestListRow("#reminderList",".reminder-text"));
   updateListVisibility();
 });
@@ -898,7 +1004,7 @@ function resetBathroom() {
   activeTable = null;
   calledTables = new Set();
   const panel = $("#bathroomPanel");
-  panel.style.background = "var(--bath-neutral)";
+  panel.style.background = "#fff";
   const current = $("#bathroomCurrent");
   current.textContent = "";
   current.style.background = "#fff";
@@ -1041,37 +1147,62 @@ if(objectiveTextSmaller && objectiveTextBigger) {
 function navigationWantsPresentation() {
   return isPageFullscreen() || document.body.classList.contains("presentation-mode");
 }
-function navigatePage(url) {
-  if(navigationWantsPresentation()) safeSessionSet("stemPresentationMode","1");
-  else safeSessionRemove("stemPresentationMode");
-  window.location.href = url;
+const pageOverlay = $("#pageOverlay");
+const grouperFrame = $("#grouperFrame");
+const cleanupFrame = $("#cleanupFrame");
+let activeOverlay = "";
+
+function postGradeToGrouper() {
+  try {
+    grouperFrame?.contentWindow?.postMessage({type:"stem-grade",grade:activeGrade},"*");
+  } catch(e) {}
 }
+function showOverlay(kind) {
+  const frame = kind === "grouper" ? grouperFrame : cleanupFrame;
+  if(!pageOverlay || !frame) return;
+  activeOverlay = kind;
+  pageOverlay.classList.add("active");
+  pageOverlay.setAttribute("aria-hidden","false");
+  [grouperFrame,cleanupFrame].forEach(f => f?.classList.toggle("active", f === frame));
+  if(kind === "grouper") postGradeToGrouper();
+  try { frame.contentWindow?.postMessage({type:"stem-overlay-show",kind,grade:activeGrade},"*"); } catch(e) {}
+}
+function hideOverlay() {
+  activeOverlay = "";
+  pageOverlay?.classList.remove("active");
+  pageOverlay?.setAttribute("aria-hidden","true");
+  [grouperFrame,cleanupFrame].forEach(f => f?.classList.remove("active"));
+}
+window.addEventListener("message", e => {
+  if(e.data?.type === "stem-overlay-close") hideOverlay();
+  if(e.data?.type === "stem-overlay-open") showOverlay(e.data.kind);
+});
+
 function isTypingTarget(el) {
   return !!el && (el.matches?.("input,textarea,select") || el.isContentEditable);
 }
 document.addEventListener("keydown", e => {
-  if(isTypingTarget(e.target)) return;
+  if(activeOverlay || isTypingTarget(e.target)) return;
   if(e.key === "ArrowLeft") {
     e.preventDefault();
-    navigatePage("./grouper.html?v=38");
+    showOverlay("grouper");
   } else if(e.key === "ArrowRight") {
     e.preventDefault();
-    navigatePage("./cleanup.html?v=38");
+    showOverlay("cleanup");
   }
 });
 document.querySelector(".grouper-nav")?.addEventListener("click", e => {
   e.preventDefault();
-  navigatePage("./grouper.html?v=38");
+  showOverlay("grouper");
 });
 document.querySelector(".page-arrow-right")?.addEventListener("click", e => {
   e.preventDefault();
-  navigatePage("./cleanup.html?v=38");
+  showOverlay("cleanup");
 });
-if(safeSessionGet("stemPresentationMode") === "1") {
-  document.body.classList.add("presentation-mode");
-}
-/* Always use the full viewport. Browsers require a user gesture to hide browser chrome,
-   so the first pointer/key interaction also requests native fullscreen when allowed. */
+
+/* Full-viewport presentation mode is always available. Native fullscreen,
+   once entered on the Task Screen, stays alive because Grouper/Cleanup are
+   shown as same-document overlays rather than navigating away. */
 document.body.classList.add("presentation-mode");
 safeSessionSet("stemPresentationMode","1");
 let nativeFullscreenRequested = false;
@@ -1142,20 +1273,14 @@ if(fullscreenToggle){
     e.preventDefault();e.stopPropagation();
     if(isPageFullscreen()){
       await exitPageFullscreen();
-      document.body.classList.remove("presentation-mode");
-    }else if(document.body.classList.contains("presentation-mode")){
-      document.body.classList.remove("presentation-mode");
+      document.body.classList.add("presentation-mode");
+      safeSessionRemove("stemNativeFullscreenWanted");
     }else{
+      document.body.classList.add("presentation-mode");
       const ok=await enterPageFullscreen();
-      if(!ok) document.body.classList.add("presentation-mode");
+      if(ok) safeSessionSet("stemNativeFullscreenWanted","1");
     }
     syncFullscreenButton();
-    if(isPageFullscreen() || document.body.classList.contains("presentation-mode")) {
-      safeSessionSet("stemPresentationMode","1");
-      fullscreenToggle.textContent = "EXIT FULL SCREEN";
-    } else {
-      safeSessionRemove("stemPresentationMode");
-    }
   });
   ["fullscreenchange","webkitfullscreenchange","MSFullscreenChange"].forEach(evt=>document.addEventListener(evt,syncFullscreenButton));
 }
