@@ -35,6 +35,7 @@ function defaultState() {
       bathroom:"BATHROOM + WATER"
     },
     objective:"",
+    objectiveTextAdjust:0,
     taskSub:"",
     earlyFinisher:"",
     earlyFinisherFontAdjust:0,
@@ -107,6 +108,7 @@ function loadState(grade) {
   if(!["star","bullet"].includes(merged.listMarkers.success)) merged.listMarkers.success = "star";
   if(!["star","bullet"].includes(merged.listMarkers.reminders)) merged.listMarkers.reminders = "star";
   if(typeof merged.task?.loop !== "boolean") merged.task.loop = false;
+  if(typeof merged.objectiveTextAdjust !== "number") merged.objectiveTextAdjust = 0;
   if(typeof merged.earlyFinisher !== "string") merged.earlyFinisher = "";
   if(typeof merged.earlyFinisherFontAdjust !== "number") merged.earlyFinisherFontAdjust = 0;
   if(!merged.fontAdjust.learning) merged.fontAdjust.learning = {title:0,text:0};
@@ -268,6 +270,10 @@ function setEditMode(on) {
   $("#objectiveInput").readOnly = !on;
   renderSectionIcons().catch(()=>{});
   renderAllLists().catch(()=>{});
+  requestAnimationFrame(() => {
+    fitObjectiveText();
+    if(!on) fitChecklistText();
+  });
 
   if(on && navigator.storage?.persist) {
     navigator.storage.persist().catch(()=>{});
@@ -378,20 +384,24 @@ function startClassCountdownClock() {
 
 function fitTextareaToBox(el, maxPx, minPx) {
   if(!el) return;
-  el.style.fontSize = `${maxPx}px`;
+  el.style.setProperty("font-size", `${maxPx}px`, "important");
   let size = maxPx;
   while(size > minPx && (el.scrollHeight > el.clientHeight + 1 || el.scrollWidth > el.clientWidth + 1)) {
     size -= 1;
-    el.style.fontSize = `${size}px`;
+    el.style.setProperty("font-size", `${size}px`, "important");
   }
 }
 function fitObjectiveText() {
   const el = $("#objectiveInput");
   if(!el) return;
-  const max = Math.max(18, Math.min(28, window.innerWidth * .015));
-  fitTextareaToBox(el, max, 17);
+  el.style.removeProperty("font-size");
+  const base = parseFloat(getComputedStyle(el).fontSize) || 23;
+  const max = Math.max(12, Math.min(42, base + Number(state.objectiveTextAdjust || 0)));
+  el.style.setProperty("font-size", `${max}px`, "important");
+  if(!editMode) fitTextareaToBox(el, max, 12);
 }
 function fitChecklistText() {
+  if(editMode) return;
   $$(".step-text").forEach(el => fitTextareaToBox(el, parseFloat(getComputedStyle(el).fontSize) || 18, 10));
   $$(".reminder-text").forEach(el => fitTextareaToBox(el, parseFloat(getComputedStyle(el).fontSize) || 21, 10));
 }
@@ -543,7 +553,7 @@ async function renderChecklist({
       row.classList.toggle("is-blank", !input.value.trim());
       saveState();
       updateListVisibility();
-      fitTextareaToBox(input, parseFloat(getComputedStyle(input).fontSize) || 18, 10);
+      if(!editMode) fitTextareaToBox(input, parseFloat(getComputedStyle(input).fontSize) || 18, 10);
     });
 
     remove.addEventListener("click", async () => {
@@ -592,7 +602,7 @@ async function renderAllLists() {
   applyPanelFont("reminders");
   requestAnimationFrame(() => {
     fitObjectiveText();
-    fitChecklistText();
+    if(!editMode) fitChecklistText();
   });
 }
 $("#addSuccessBtn").addEventListener("click", async e => {
@@ -894,7 +904,7 @@ $("#bathResetBtn").addEventListener("click", resetBathroom);
 
 /* Font controls */
 const FONT_MAP = {
-  learning:{title:[".learning-title"], text:["#objectiveInput",".step-text"]},
+  learning:{title:[".learning-title"], text:[".step-text"]},
   countdown:{title:[".countdown-panel .panel-title"], text:["#countdownDisplay","#endTimeInput"]},
   voice:{title:[".voice .panel-title"], text:[".voice-btn","#voiceLabel"]},
   task:{title:[".task .panel-title",".early-finisher-label"], text:["#taskSub",".task-text-preview",".task-empty"]},
@@ -908,9 +918,9 @@ function applyPanelFont(panel) {
   ["title","text"].forEach(part => {
     const delta = Number(state.fontAdjust?.[panel]?.[part] || 0);
     elementsFor(panel,part).forEach(el => {
-      el.style.fontSize = "";
+      el.style.removeProperty("font-size");
       const base = parseFloat(getComputedStyle(el).fontSize) || 16;
-      el.style.fontSize = Math.max(8, base + delta) + "px";
+      el.style.setProperty("font-size", Math.max(8, base + delta) + "px", "important");
     });
   });
 }
@@ -926,6 +936,24 @@ $$(".panel-tools button").forEach(btn => btn.addEventListener("click", e => {
   saveState();
   applyPanelFont(panel);
 }));
+
+const objectiveTextSmaller = $("#objectiveTextSmaller");
+const objectiveTextBigger = $("#objectiveTextBigger");
+if(objectiveTextSmaller && objectiveTextBigger) {
+  objectiveTextSmaller.addEventListener("click", e => {
+    e.stopPropagation();
+    state.objectiveTextAdjust = Math.max(-18, Number(state.objectiveTextAdjust || 0) - 2);
+    saveState();
+    fitObjectiveText();
+  });
+  objectiveTextBigger.addEventListener("click", e => {
+    e.stopPropagation();
+    state.objectiveTextAdjust = Math.min(30, Number(state.objectiveTextAdjust || 0) + 2);
+    saveState();
+    fitObjectiveText();
+  });
+}
+
 
 
 /* Page fullscreen */
@@ -1002,7 +1030,7 @@ window.addEventListener("resize", () => {
   resizeTimer = setTimeout(() => {
     applyAllFonts();
     fitObjectiveText();
-    fitChecklistText();
+    if(!editMode) fitChecklistText();
   },120);
 });
 

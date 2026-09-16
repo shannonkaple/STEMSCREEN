@@ -1136,3 +1136,157 @@ body.presentation-mode .board{
   overflow:hidden !important;
   white-space:normal !important;
 }
+
+
+/* =========================================================
+   v32 — circular class timers + sane editing controls
+   ========================================================= */
+
+/* Objective-specific edit controls float in the objective section only. */
+.objective-content{
+  position:relative !important;
+}
+.objective-text-tools{
+  position:absolute;
+  right:4px;
+  bottom:5px;
+  z-index:30;
+  align-items:center;
+  gap:3px;
+  background:rgba(255,255,255,.96);
+  border:2px solid #000;
+  border-radius:999px;
+  padding:2px 4px;
+}
+.objective-text-tools span{
+  font-size:7px;
+  color:#000;
+}
+.objective-text-tools button{
+  width:27px;
+  height:22px;
+  border:1.5px solid #000;
+  border-radius:999px;
+  background:#fff;
+  padding:0;
+  font-size:9px;
+}
+
+/* Circular period buttons, visually matching Voice Level. */
+.period-presets{
+  width:auto !important;
+  display:grid !important;
+  grid-template-columns:repeat(4,24px) !important;
+  grid-template-rows:repeat(2,24px) !important;
+  gap:3px 5px !important;
+  justify-content:center !important;
+  align-content:center !important;
+}
+.period-btn{
+  width:24px !important;
+  height:24px !important;
+  min-width:24px !important;
+  padding:0 !important;
+  border:2px solid #000 !important;
+  border-radius:50% !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  font-family:"VAGTaskscreen",sans-serif !important;
+  font-size:8px !important;
+  font-weight:900 !important;
+  line-height:1 !important;
+  color:#fff !important;
+  -webkit-text-stroke:.25px #000;
+  paint-order:stroke fill;
+  box-shadow:none !important;
+}
+.period-btn.period-second{
+  background:#22B8F4 !important;
+}
+.period-btn.period-first{
+  background:#7618CF !important;
+}
+.period-btn.active{
+  box-shadow:inset 0 0 0 2px #fff,0 2px 0 rgba(0,0,0,.2) !important;
+  transform:scale(1.12);
+}
+
+/* Success/Steps bullets and stars are centered on the actual row text block. */
+.success-list .list-marker,
+.reminder-list .list-marker{
+  align-self:center !important;
+  height:auto !important;
+  min-height:0 !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  line-height:1 !important;
+  margin:0 !important;
+}
+
+/* Critical edit-layout fix:
+   keep the picture column present while editing, even when it has no image.
+   The previous 3-column no-image rule was squeezing the textarea into an auto column. */
+body.edit-mode .reminder-list .reminder-row,
+body.edit-mode .reminder-list .reminder-row.no-image{
+  grid-template-columns:28px 58px minmax(0,1fr) 28px !important;
+  gap:7px !important;
+  align-items:center !important;
+}
+body.edit-mode .reminder-pic-wrap{
+  width:54px !important;
+  height:54px !important;
+  display:block !important;
+}
+body.edit-mode .reminder-text{
+  width:100% !important;
+  min-width:0 !important;
+  height:auto !important;
+  min-height:48px !important;
+  max-height:58px !important;
+  padding:7px 8px 4px !important;
+  text-align:left !important;
+  direction:ltr !important;
+  white-space:pre-wrap !important;
+  word-break:normal !important;
+  overflow-wrap:break-word !important;
+  overflow:hidden !important;
+}
+body.edit-mode .reminder-remove{
+  align-self:center !important;
+  justify-self:center !important;
+}
+
+/* Outside edit mode an unused picture slot disappears cleanly. */
+body:not(.edit-mode) .reminder-list .reminder-row.no-image{
+  grid-template-columns:28px minmax(0,1fr) !important;
+}
+body:not(.edit-mode) .reminder-list .reminder-row.no-image .reminder-pic-wrap{
+  display:none !important;
+}
+
+/* Keep criteria editing natural too. */
+body.edit-mode .success-list .step-row{
+  grid-template-columns:28px minmax(0,1fr) 28px !important;
+  align-items:center !important;
+}
+body.edit-mode .success-list .step-text{
+  min-width:0 !important;
+  text-align:left !important;
+  direction:ltr !important;
+  overflow:hidden !important;
+}
+
+/* Give the green edit bar a little breathing room without crushing rows. */
+body.edit-mode .reminder-list{
+  padding-bottom:2px !important;
+}
+body.edit-mode .reminders .list-edit-bar{
+  margin-top:3px !important;
+}
+
+/* Make body-text controls more obvious. */
+.panel-tools span{
+  font-weight:900 !important;
+}

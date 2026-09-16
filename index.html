@@ -4,7 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>STEM Task Screen</title>
-<link rel="stylesheet" href="./styles.css?v=31">
+<link rel="icon" type="image/png" href="./star.png?v=32">
+<link rel="stylesheet" href="./styles.css?v=32">
 </head>
 <body>
 <div class="board" id="board">
@@ -12,7 +13,7 @@
   <section class="panel learning" data-panel="learning">
     <div class="panel-tools edit-only">
       <span>TITLE</span><button data-font-part="title" data-font-delta="-2">A−</button><button data-font-part="title" data-font-delta="2">A+</button>
-      <span>TEXT</span><button data-font-part="text" data-font-delta="-2">A−</button><button data-font-part="text" data-font-delta="2">A+</button>
+      <span>CRITERIA</span><button data-font-part="text" data-font-delta="-2">A−</button><button data-font-part="text" data-font-delta="2">A+</button>
     </div>
 
     <div class="learning-grid" id="learningGrid">
@@ -23,6 +24,11 @@
         <div class="objective-content">
           <div class="section-icon-slot" data-section-icon="objective"></div>
           <textarea id="objectiveInput" class="objective-input" placeholder="Type today's objective..."></textarea>
+          <div class="objective-text-tools edit-only">
+            <span>OBJECTIVE TEXT</span>
+            <button id="objectiveTextSmaller" type="button">A−</button>
+            <button id="objectiveTextBigger" type="button">A+</button>
+          </div>
         </div>
       </div>
 
@@ -57,14 +63,14 @@
     </div>
     <div class="countdown-display" id="countdownDisplay">--:--</div>
     <div class="period-presets" aria-label="Class period end times">
-      <button type="button" class="period-btn" data-end-time="09:03">2A</button>
-      <button type="button" class="period-btn" data-end-time="09:43">2B</button>
-      <button type="button" class="period-btn" data-end-time="10:33">2C</button>
-      <button type="button" class="period-btn" data-end-time="11:13">2D</button>
-      <button type="button" class="period-btn" data-end-time="12:47">1A</button>
-      <button type="button" class="period-btn" data-end-time="13:27">1B</button>
-      <button type="button" class="period-btn" data-end-time="14:17">1C</button>
-      <button type="button" class="period-btn" data-end-time="14:20">1D</button>
+      <button type="button" class="period-btn period-second" data-end-time="09:03">2A</button>
+      <button type="button" class="period-btn period-second" data-end-time="09:43">2B</button>
+      <button type="button" class="period-btn period-second" data-end-time="10:33">2C</button>
+      <button type="button" class="period-btn period-second" data-end-time="11:13">2D</button>
+      <button type="button" class="period-btn period-first" data-end-time="12:47">1A</button>
+      <button type="button" class="period-btn period-first" data-end-time="13:27">1B</button>
+      <button type="button" class="period-btn period-first" data-end-time="14:17">1C</button>
+      <button type="button" class="period-btn period-first" data-end-time="14:20">1D</button>
     </div>
     <input id="endTimeInput" class="end-time-input" type="time" aria-label="Time class ends" title="Time class ends">
   </section>
@@ -198,6 +204,6 @@
     <button class="utility" id="editToggle" type="button">EDIT</button>
   </div>
 </div>
-<script src="./app.js?v=31"></script>
+<script src="./app.js?v=32"></script>
 </body>
 </html>
