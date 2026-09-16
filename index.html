@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>STEM Task Screen</title>
-<link rel="icon" type="image/png" href="./star.png?v=39">
-<link rel="stylesheet" href="./styles.css?v=39">
+<link rel="icon" type="image/png" href="./star.png?v=44">
+<link rel="stylesheet" href="./styles.css?v=44">
 </head>
 <body>
 <div class="board" id="board">
@@ -101,17 +101,18 @@
       <span data-edit-key="titles.task">TASK OF THE DAY</span>
     </div>
     <div class="task-content-grid">
-      <textarea class="task-sub" id="taskSub" rows="6" placeholder="Type what students need to do..." aria-label="Task directions"></textarea>
+      <div class="task-instruction-column">
+        <div class="task-step-list" id="taskStepList"></div>
+        <div class="task-step-edit-bar edit-only">
+          <button class="add-task-step" id="addTaskStepBtn" type="button">+ ADD</button>
+        </div>
+      </div>
 
       <div class="task-stage">
         <div class="task-editor edit-only">
         <div class="mode-row">
-          <button type="button" class="mode-btn" data-mode="text">TEXT</button>
           <button type="button" class="mode-btn" data-mode="image">IMAGE / GIF</button>
           <button type="button" class="mode-btn" data-mode="video">VIDEO</button>
-        </div>
-        <div class="task-control" data-control="text">
-          <textarea id="taskTextInput" placeholder="Type the task, directions, question, etc."></textarea>
         </div>
         <div class="task-control" data-control="image">
           <label class="file-btn">UPLOAD IMAGE / GIF<input id="imageFileInput" type="file" accept="image/*" hidden></label>
@@ -198,8 +199,8 @@
   </section>
 
 
-  <a class="dashboard-nav grouper-nav" href="./grouper.html?v=39">RAINBOW GROUPER</a>
-  <a class="page-arrow page-arrow-right" href="./cleanup.html?v=39" aria-label="Open clean up board">→</a>
+  <a class="dashboard-nav grouper-nav" href="./grouper.html?v=44">RAINBOW GROUPER</a>
+  <a class="page-arrow page-arrow-right" href="./cleanup.html?v=44" aria-label="Open clean up board">→</a>
 
   <div class="grade-switch" aria-label="Grade profile">
     <button class="grade-btn" data-grade="first" type="button">1ST GRADE</button>
@@ -214,10 +215,10 @@
 </div>
 
   <div class="page-overlay" id="pageOverlay" aria-hidden="true">
-    <iframe class="page-frame" id="grouperFrame" src="./grouper.html?v=39&embedded=1" title="Rainbow Grouper" allow="fullscreen"></iframe>
-    <iframe class="page-frame" id="cleanupFrame" src="./cleanup.html?v=39&embedded=1" title="Clean Up" allow="autoplay; fullscreen"></iframe>
+    <iframe class="page-frame" id="grouperFrame" src="./grouper.html?v=44&embedded=1" title="Rainbow Grouper" allow="fullscreen"></iframe>
+    <iframe class="page-frame" id="cleanupFrame" src="./cleanup.html?v=44&embedded=1" title="Clean Up" allow="autoplay; fullscreen"></iframe>
   </div>
 
-<script src="./app.js?v=39"></script>
+<script src="./app.js?v=44"></script>
 </body>
 </html>

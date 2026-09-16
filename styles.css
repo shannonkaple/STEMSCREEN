@@ -2114,3 +2114,311 @@ body.edit-mode .reminder-row.has-image{
   .period-btn{width:24px !important;height:24px !important;min-width:24px !important}
   .early-content-grid{grid-template-columns:minmax(92px,27%) minmax(0,1fr)}
 }
+
+
+/* ============================================================
+   v41 — clean list rows + never crop uploaded media
+   ============================================================ */
+
+/* Lists never create tiny implicit grid rows. */
+.success-list,
+.reminder-list{
+  grid-auto-rows:minmax(0,1fr) !important;
+  align-content:stretch !important;
+  overflow:hidden !important;
+}
+.success-list .step-row,
+.reminder-list .reminder-row{
+  min-height:0 !important;
+  max-height:none !important;
+  overflow:hidden !important;
+}
+body.edit-mode .success-list .step-row.is-blank,
+body.edit-mode .reminder-list .reminder-row.is-blank{
+  display:grid !important;
+}
+
+/* Exact row counts used by the cleaned lists. */
+.success-list[data-count="1"],
+.reminder-list[data-count="1"]{grid-template-rows:minmax(0,1fr) !important}
+.success-list[data-count="2"],
+.reminder-list[data-count="2"]{grid-template-rows:repeat(2,minmax(0,1fr)) !important}
+.success-list[data-count="3"],
+.reminder-list[data-count="3"]{grid-template-rows:repeat(3,minmax(0,1fr)) !important}
+.success-list[data-count="4"],
+.reminder-list[data-count="4"]{grid-template-rows:repeat(4,minmax(0,1fr)) !important}
+.success-list[data-count="5"],
+.reminder-list[data-count="5"]{grid-template-rows:repeat(5,minmax(0,1fr)) !important}
+.success-list[data-count="6"],
+.reminder-list[data-count="6"]{grid-template-rows:repeat(6,minmax(0,1fr)) !important}
+
+/* Every uploaded picture/video is FIT INSIDE its assigned area.
+   Never crop just to fill a square/rectangle. */
+.section-icon-slot,
+.task-preview,
+.early-media-slot,
+.step-pic-wrap,
+.reminder-pic-wrap,
+.video-wrap,
+.steps-card{
+  overflow:hidden !important;
+}
+
+.section-icon-slot img,
+.task-preview img,
+.task-preview video,
+.early-media-slot img,
+.early-media-slot video,
+.step-pic,
+.reminder-pic,
+.video-wrap video,
+.steps-card img{
+  width:100% !important;
+  height:100% !important;
+  max-width:100% !important;
+  max-height:100% !important;
+  object-fit:contain !important;
+  object-position:center !important;
+}
+
+/* Images should not stretch beyond their natural aspect ratio. */
+.task-preview img,
+.section-icon-slot img,
+.early-media-slot img,
+.step-pic,
+.reminder-pic,
+.steps-card img{
+  background:transparent !important;
+}
+
+/* Uploaded video gets letterboxing when needed rather than clipping. */
+.task-preview video,
+.early-media-slot video,
+.video-wrap video{
+  background:#000 !important;
+}
+
+
+/* ============================================================
+   v42 — stable editable boxes / task steps / media fitting
+   ============================================================ */
+
+/* OBJECTIVE: left media + right text, equal visual weight. */
+.objective-content{
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr) !important;
+  grid-template-rows:minmax(0,1fr) !important;
+  gap:8px !important;
+  align-items:stretch !important;
+  min-height:0 !important;
+}
+.objective-content .section-icon-slot{
+  width:100% !important;
+  height:100% !important;
+  max-width:none !important;
+  max-height:none !important;
+  min-width:0 !important;
+  min-height:0 !important;
+  aspect-ratio:auto !important;
+  align-self:stretch !important;
+}
+.objective-input{
+  width:100% !important;
+  height:100% !important;
+  min-width:0 !important;
+  min-height:0 !important;
+  max-height:none !important;
+  resize:none !important;
+  overflow:hidden !important;
+  text-align:center !important;
+  padding:14px !important;
+}
+body:not(.edit-mode) .objective-content:not(.has-objective-image){
+  grid-template-columns:1fr !important;
+}
+body:not(.edit-mode) .objective-content:not(.has-objective-image) .objective-input{
+  grid-column:1 !important;
+}
+
+/* SUCCESS + EARLY FINISHERS:
+   one item = one large box; N items = N equal boxes. */
+.success-list,
+.reminder-list,
+.task-step-list{
+  display:grid !important;
+  gap:7px !important;
+  min-height:0 !important;
+  height:100% !important;
+  overflow:hidden !important;
+  grid-auto-flow:row !important;
+  grid-auto-rows:minmax(0,1fr) !important;
+}
+.success-list[data-count="1"],
+.reminder-list[data-count="1"],
+.task-step-list[data-count="1"]{grid-template-rows:minmax(0,1fr) !important}
+.success-list[data-count="2"],
+.reminder-list[data-count="2"],
+.task-step-list[data-count="2"]{grid-template-rows:repeat(2,minmax(0,1fr)) !important}
+.success-list[data-count="3"],
+.reminder-list[data-count="3"],
+.task-step-list[data-count="3"]{grid-template-rows:repeat(3,minmax(0,1fr)) !important}
+.success-list[data-count="4"],
+.reminder-list[data-count="4"],
+.task-step-list[data-count="4"]{grid-template-rows:repeat(4,minmax(0,1fr)) !important}
+.success-list[data-count="5"],
+.reminder-list[data-count="5"],
+.task-step-list[data-count="5"]{grid-template-rows:repeat(5,minmax(0,1fr)) !important}
+.success-list[data-count="6"],
+.reminder-list[data-count="6"],
+.task-step-list[data-count="6"]{grid-template-rows:repeat(6,minmax(0,1fr)) !important}
+.task-step-list[data-count="7"]{grid-template-rows:repeat(7,minmax(0,1fr)) !important}
+.task-step-list[data-count="8"]{grid-template-rows:repeat(8,minmax(0,1fr)) !important}
+
+.success-list .step-row,
+.reminder-list .reminder-row,
+.task-step-row{
+  min-height:0 !important;
+  height:auto !important;
+  max-height:none !important;
+  overflow:hidden !important;
+  align-items:center !important;
+}
+.success-list .step-text,
+.reminder-list .reminder-text,
+.task-step-text{
+  width:100% !important;
+  min-width:0 !important;
+  height:100% !important;
+  min-height:0 !important;
+  max-height:none !important;
+  resize:none !important;
+  overflow:hidden !important;
+  white-space:pre-wrap !important;
+  overflow-wrap:break-word !important;
+  word-break:normal !important;
+  direction:ltr !important;
+  writing-mode:horizontal-tb !important;
+  text-align:left !important;
+  line-height:1.08 !important;
+  padding:10px 9px 6px !important;
+}
+.success-list[data-count="1"] .step-text,
+.reminder-list[data-count="1"] .reminder-text,
+.task-step-list[data-count="1"] .task-step-text{
+  font-size:clamp(20px,1.65vw,30px) !important;
+  padding:18px 14px !important;
+}
+
+/* EARLY FINISHERS text column remains wide/readable. */
+.early-text-column{
+  min-width:0 !important;
+}
+.reminder-row,
+body.edit-mode .reminder-row,
+body.edit-mode .reminder-row.no-image,
+body.edit-mode .reminder-row.has-image{
+  grid-template-columns:30px minmax(0,1fr) 28px !important;
+}
+.reminder-text{
+  font-size:clamp(17px,1.25vw,23px) !important;
+}
+
+/* TASK OF THE DAY:
+   shared media stays on the LEFT; addable direction boxes on the RIGHT. */
+.task-content-grid{
+  grid-template-columns:minmax(0,66%) minmax(210px,34%) !important;
+  gap:9px !important;
+}
+.task-stage{
+  grid-column:1 !important;
+  grid-row:1 !important;
+  min-height:0 !important;
+}
+.task-instruction-column{
+  grid-column:2 !important;
+  grid-row:1 !important;
+  min-width:0;
+  min-height:0;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  overflow:hidden;
+}
+.task-step-list{
+  flex:1;
+}
+.task-step-row{
+  position:relative;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 28px;
+  gap:5px;
+  border:2px solid rgba(0,0,0,.35);
+  border-radius:15px;
+  background:#fff;
+  padding:4px 5px;
+}
+.task-step-text{
+  border:0 !important;
+  background:transparent !important;
+  font-family:"VAGTaskscreen",sans-serif !important;
+  color:#173d61 !important;
+}
+.task-step-remove{
+  width:24px;
+  height:24px;
+  align-self:center;
+  justify-self:center;
+  border:2px solid #000;
+  border-radius:50%;
+  background:#fff;
+  font-weight:900;
+  padding:0;
+  line-height:18px;
+}
+body:not(.edit-mode) .task-step-remove{display:none}
+.task-step-edit-bar{
+  flex:0 0 auto;
+  justify-content:center;
+  align-items:center;
+}
+.add-task-step{
+  border:2px solid #000;
+  border-radius:999px;
+  background:#fff;
+  padding:5px 13px;
+  font-family:"VAGTaskscreen",sans-serif;
+  font-weight:900;
+}
+body.edit-mode .task-step-row{
+  background:#fff !important;
+}
+
+/* When the Task has only one instruction, make it the full-height focal box. */
+.task-step-list[data-count="1"] .task-step-row{
+  align-self:stretch;
+}
+
+/* All uploaded image/video/GIF content FITS. Never crop. */
+.section-icon-slot img,
+.task-preview img,
+.task-preview video,
+.early-media-slot img,
+.early-media-slot video,
+.video-wrap video,
+.steps-card img{
+  width:100% !important;
+  height:100% !important;
+  max-width:100% !important;
+  max-height:100% !important;
+  object-fit:contain !important;
+  object-position:center !important;
+}
+.task-preview,
+.early-media-slot,
+.section-icon-slot{
+  overflow:hidden !important;
+}
+
+/* Manual time chooser still only exists in Edit mode. */
+.end-time-input{display:none !important}
+body.edit-mode .end-time-input{display:block !important}

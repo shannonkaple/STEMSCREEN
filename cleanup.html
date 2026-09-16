@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Clean Up</title>
-<link rel="icon" type="image/png" href="./star.png?v=39">
+<link rel="icon" type="image/png" href="./star.png?v=44">
 <style>
 @font-face{font-family:"KAHomebodyClub";src:url("./KAHomebodyClub.ttf") format("truetype");font-display:swap}
 @font-face{font-family:"VAGTaskscreen";src:url("./VAG-Rounded-Std-Black_47296.ttf") format("truetype");font-display:swap}
@@ -241,7 +241,7 @@ body.presentation-mode{position:fixed!important;inset:0!important;width:100vw!im
 </head>
 
 <body>
-<a class="back-arrow" href="./index.html?v=39" aria-label="Back to Task Screen">←</a>
+<a class="back-arrow" href="./index.html?v=44" aria-label="Back to Task Screen">←</a>
 <button class="fullscreen-btn" id="cleanupFullscreen" type="button">FULL SCREEN</button>
 
 <main class="cleanup-shell">
@@ -265,23 +265,43 @@ body.presentation-mode{position:fixed!important;inset:0!important;width:100vw!im
   const video = document.getElementById("cleanupSong");
   const fs = document.getElementById("cleanupFullscreen");
 
-  const tryPlay = () => video?.play().catch(()=>{});
-  tryPlay();
+  const tryPlay = () => startCleanupVisit();
   window.addEventListener("load", tryPlay, {once:true});
-  document.addEventListener("pointerdown", tryPlay, {once:true});
+  document.addEventListener("pointerdown", () => {
+    if(!stoppedThisVisit && video?.paused) video.play().catch(()=>{});
+  }, {once:true});
 
   const isTypingTarget = el =>
     !!el && (el.matches?.("input,textarea,select") || el.isContentEditable);
 
-  /* SPACEBAR always pauses/resumes the clean-up song, even if a button
-     or the video controls currently have focus. */
+  let stoppedThisVisit = false;
+
+  function startCleanupVisit() {
+    stoppedThisVisit = false;
+    try { video.currentTime = 0; } catch(e) {}
+    video?.play().catch(()=>{});
+  }
+
+  function stopCleanupForVisit() {
+    if(stoppedThisVisit) return;
+    stoppedThisVisit = true;
+    try { video?.pause(); } catch(e) {}
+  }
+
+  video?.addEventListener("play", () => {
+    if(stoppedThisVisit) {
+      try { video.pause(); } catch(e) {}
+    }
+  });
+
+  /* SPACEBAR is STOP-ONLY for this visit.
+     It will not resume until you leave Cleanup and come back. */
   window.addEventListener("keydown", e => {
     if((e.code !== "Space" && e.key !== " ") || isTypingTarget(e.target)) return;
     e.preventDefault();
     e.stopPropagation();
-    if(!video) return;
-    if(video.paused) video.play().catch(()=>{});
-    else video.pause();
+    stopCleanupForVisit();
+    if(embedded) window.parent.postMessage({type:"stem-cleanup-stop"},"*");
   }, true);
 
   const isFs = () => !!(document.fullscreenElement || document.webkitFullscreenElement);
@@ -324,20 +344,23 @@ body.presentation-mode{position:fixed!important;inset:0!important;width:100vw!im
     window.location.href = url;
   };
   window.addEventListener("message", e => {
-    if(e.data?.type === "stem-overlay-show") video?.play().catch(()=>{});
+    if(e.data?.type === "stem-overlay-show") {
+      startCleanupVisit();
+    }
   });
   if(embedded && fs) fs.style.display="none";
 
   document.querySelector(".back-arrow")?.addEventListener("click", e => {
     e.preventDefault();
-    go("./index.html?v=39");
+    go("./index.html?v=44");
   });
 
   document.addEventListener("keydown", e => {
     if(isTypingTarget(e.target)) return;
     if(e.key === "ArrowLeft"){
       e.preventDefault();
-      go("./index.html?v=39");
+      if(embedded) window.parent.postMessage({type:"stem-nav",source:"cleanup",key:"ArrowLeft"},"*");
+      else go("./index.html?v=44");
     }
   });
 
@@ -366,3 +389,16 @@ body.presentation-mode{position:fixed!important;inset:0!important;width:100vw!im
 </script>
 </body>
 </html>
+
+<style>
+.cleanup-title{
+  line-height:.90!important;
+  gap:4px!important;
+  font-size:clamp(82px,8.4vw,160px)!important;
+}
+.cleanup-title span{
+  display:block!important;
+  line-height:.90!important;
+  margin:0!important;
+}
+</style>

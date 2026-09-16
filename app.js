@@ -47,6 +47,7 @@ function defaultState() {
     objective:"",
     objectiveTextAdjust:0,
     taskSub:"",
+    taskSteps:[],
     earlyFinisher:"",
     earlyFinisherFontAdjust:0,
     voiceLevel:2,
@@ -59,9 +60,7 @@ function defaultState() {
       reminders:"star"
     },
     successCriteria:[
-      {id:"s1",text:""},
-      {id:"s2",text:""},
-      {id:"s3",text:""}
+      {id:"s1",text:""}
     ],
     reminders:[
       {id:"r1",text:""}
@@ -105,11 +104,39 @@ function deepMerge(base, extra) {
   return out;
 }
 
+
+function cleanSavedList(items, prefix) {
+  const arr = Array.isArray(items) ? items : [];
+  const out = [];
+  for(const raw of arr) {
+    const item = (raw && typeof raw === "object") ? {...raw} : {text:String(raw || "")};
+    item.text = String(item.text || "");
+    if(!item.text.trim()) continue;
+    if(!item.id) item.id = `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2,7)}`;
+    out.push(item);
+  }
+  return out;
+}
+
+function ensureOneEditorRow(listName, prefix) {
+  if(!editMode) return;
+  if(!Array.isArray(state[listName])) state[listName] = [];
+  if(state[listName].length === 0) {
+    state[listName].push({id:`${prefix}_${Date.now()}_editor`, text:""});
+  }
+}
+
+function stripBlankEditorRows() {
+  state.successCriteria = cleanSavedList(state.successCriteria, "s");
+  state.reminders = cleanSavedList(state.reminders, "r");
+  state.taskSteps = cleanSavedList(state.taskSteps, "t");
+}
+
 function loadState(grade) {
   let parsed = {};
   try { parsed = JSON.parse(safeLocalGet(STORAGE_PREFIX + grade) || "{}"); } catch(e) {}
   const merged = deepMerge(defaultState(), parsed);
-  if(!Array.isArray(merged.successCriteria)) merged.successCriteria = defaultState().successCriteria;
+  merged.successCriteria = cleanSavedList(merged.successCriteria, "s");
   if(!merged.countdown || typeof merged.countdown !== "object") merged.countdown = {endTime:""};
   if(typeof merged.countdown.endTime !== "string") merged.countdown.endTime = "";
   if(!merged.listMarkers || typeof merged.listMarkers !== "object") merged.listMarkers = {success:"star",reminders:"star"};
@@ -117,15 +144,19 @@ function loadState(grade) {
   if(!["star","bullet"].includes(merged.listMarkers.reminders)) merged.listMarkers.reminders = "star";
   if(["STEPS","REMINDERS"].includes(String(merged.titles?.reminders || "").toUpperCase())) merged.titles.reminders = "EARLY FINISHERS";
   if(typeof merged.task?.loop !== "boolean") merged.task.loop = false;
+  if(!Array.isArray(merged.taskSteps)) merged.taskSteps = [];
+  if(!merged.taskSteps.length && String(merged.taskSub || "").trim()) {
+    merged.taskSteps = [{id:"t_legacy_sub", text:String(merged.taskSub).trim()}];
+  }
+  if(!merged.taskSteps.length && merged.task?.mode === "text" && String(merged.task.text || "").trim()) {
+    merged.taskSteps = [{id:"t_legacy_media_text", text:String(merged.task.text).trim()}];
+    merged.task = {mode:"empty", text:"", url:"", urlKind:"", loop:false};
+  }
+  merged.taskSteps = cleanSavedList(merged.taskSteps, "t");
   if(typeof merged.objectiveTextAdjust !== "number") merged.objectiveTextAdjust = 0;
   if(typeof merged.earlyFinisher !== "string") merged.earlyFinisher = "";
   if(typeof merged.earlyFinisherFontAdjust !== "number") merged.earlyFinisherFontAdjust = 0;
-  if(!Array.isArray(merged.reminders)) merged.reminders = [{id:"r1",text:""}];
-  const reminderFilled = merged.reminders.filter(r => String(r?.text || "").trim());
-  const reminderBlank = merged.reminders.find(r => !String(r?.text || "").trim());
-  merged.reminders = [...reminderFilled];
-  if(reminderBlank) merged.reminders.push(reminderBlank);
-  if(!merged.reminders.length) merged.reminders.push({id:`r_${Date.now()}_blank`,text:""});
+  merged.reminders = cleanSavedList(merged.reminders, "r");
   if(!merged.fontAdjust.learning) merged.fontAdjust.learning = {title:0,text:0};
   if(!merged.fontAdjust.countdown) merged.fontAdjust.countdown = {title:0,text:0};
   return merged;
@@ -251,8 +282,6 @@ function syncEditableText() {
     const value = getPath(state, path) ?? "";
     if (el.textContent !== String(value)) el.textContent = value;
   });
-  const taskSub = $("#taskSub");
-  if(taskSub && taskSub.value !== String(state.taskSub || "")) taskSub.value = state.taskSub || "";
 }
 $$("[data-edit-key]").forEach(el => {
   el.addEventListener("input", () => {
@@ -264,6 +293,13 @@ $$("[data-edit-key]").forEach(el => {
 
 /* Edit mode */
 function setEditMode(on) {
+  const wasEditing = editMode;
+
+  if(wasEditing && !on) {
+    stripBlankEditorRows();
+    saveState();
+  }
+
   editMode = on;
   document.body.classList.toggle("edit-mode", on);
   $("#editToggle").textContent = on ? "DONE" : "EDIT";
@@ -283,10 +319,16 @@ function setEditMode(on) {
   });
 
   $("#objectiveInput").readOnly = !on;
-  const taskSub = $("#taskSub");
-  if(taskSub) taskSub.readOnly = !on;
+
+  if(on) {
+    ensureOneEditorRow("successCriteria","s");
+    ensureOneEditorRow("reminders","r");
+    ensureOneEditorRow("taskSteps","t");
+  }
+
   renderSectionIcons().catch(()=>{});
   renderAllLists().catch(()=>{});
+  renderTaskSteps();
   requestAnimationFrame(() => {
     fitObjectiveText();
     fitChecklistText();
@@ -319,11 +361,6 @@ $("#objectiveInput")?.addEventListener("input", e => {
   fitObjectiveText();
 });
 
-/* Task directions are a real textarea: Enter always makes a new line. */
-$("#taskSub")?.addEventListener("input", e => {
-  state.taskSub = e.target.value;
-  saveState();
-});
 
 /* Voice */
 function renderVoice() {
@@ -371,27 +408,9 @@ function playTimerAlarm() {
   } catch(e) {}
 }
 
-function showCleanupPrompt() {
-  if(document.getElementById("cleanupPrompt")) return;
-  const overlay = document.createElement("div");
-  overlay.id = "cleanupPrompt";
-  overlay.innerHTML = `
-    <div class="cleanup-prompt-card">
-      <div class="cleanup-prompt-title">TIME'S UP!</div>
-      <div class="cleanup-prompt-text">Ready to start the clean up song?</div>
-      <div class="cleanup-prompt-actions">
-        <button type="button" id="stayHereBtn">STAY HERE</button>
-        <button type="button" id="goCleanupBtn">CLEAN UP →</button>
-      </div>
-    </div>`;
-  document.body.appendChild(overlay);
-  $("#stayHereBtn").onclick = () => overlay.remove();
-  $("#goCleanupBtn").onclick = () => { document.getElementById("cleanupPrompt")?.remove(); showOverlay("cleanup"); };
-}
-
 
 function formatRemaining(seconds) {
-  seconds = Math.max(0, Math.min(3599, Math.floor(seconds)));
+  seconds = Math.max(0, Math.floor(seconds));
   const m = Math.floor(seconds / 60);
   const s = seconds % 60;
   return `${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
@@ -404,14 +423,13 @@ function secondsUntilEnd(endTime) {
   end.setHours(h,m,0,0);
   const diff = Math.ceil((end.getTime() - now.getTime()) / 1000);
   if(diff <= 0) return 0;
-  // Class periods are always under an hour.
-  return Math.min(3599,diff);
+  return diff;
 }
 function updateClassCountdown() {
   const endTime = state.countdown?.endTime || "";
   const remaining = secondsUntilEnd(endTime);
 
-  if(remaining === null || remaining <= 0) {
+  if(remaining === null) {
     countdownDisplay.textContent = "--:--";
   } else {
     countdownDisplay.textContent = formatRemaining(remaining);
@@ -425,7 +443,6 @@ function updateClassCountdown() {
      lastAlarmKey !== alarmKey) {
     lastAlarmKey = alarmKey;
     playTimerAlarm();
-    showCleanupPrompt();
   }
   previousCountdownRemaining = remaining;
 }
@@ -445,6 +462,8 @@ $$(".period-btn").forEach(btn => {
     const time = btn.dataset.endTime;
     state.countdown.endTime = time;
     endTimeInput.value = time;
+    previousCountdownRemaining = null;
+    lastAlarmKey = "";
     saveState();
     updatePeriodButtons();
     updateClassCountdown();
@@ -555,7 +574,7 @@ async function renderChecklist({
   removeClass, placeholder, markerTarget, showPictures=true
 }) {
   ensureListIds(listName, mediaKind === "success" ? "s" : "r");
-  const list = state[listName];
+  const list = Array.isArray(state[listName]) ? state[listName] : [];
   const container = $(containerId);
   container.innerHTML = "";
 
@@ -634,8 +653,11 @@ async function renderChecklist({
     remove.addEventListener("click", async () => {
       if(showPictures) await listMediaDelete(mediaKind, activeGrade, item.id).catch(()=>{});
       state[listName].splice(i,1);
-      if(listName === "reminders" && !state.reminders.length) {
-        state.reminders.push({id:`r_${Date.now()}_blank`,text:""});
+      if(editMode && state[listName].length === 0) {
+        state[listName].push({
+          id:`${listName === "successCriteria" ? "s" : "r"}_${Date.now()}_editor`,
+          text:""
+        });
       }
       saveState();
       await renderAllLists();
@@ -782,27 +804,87 @@ $("#addSuccessBtn")?.addEventListener("click", async e => {
   e.stopPropagation();
   if(!editMode) setEditMode(true);
   if(!Array.isArray(state.successCriteria)) state.successCriteria = [];
-  const id = `s_${Date.now()}_${Math.random().toString(36).slice(2,7)}`;
-  state.successCriteria.push({id,text:""});
-  saveState();
-  await renderAllLists();
+  const blank = state.successCriteria.findIndex(r => !String(r?.text || "").trim());
+  if(blank < 0) {
+    state.successCriteria.push({id:`s_${Date.now()}_${Math.random().toString(36).slice(2,7)}`,text:""});
+    await renderAllLists();
+  }
   requestAnimationFrame(() => focusNewestListRow("#successList",".step-text"));
-  updateListVisibility();
 });
 $("#addReminderBtn")?.addEventListener("click", async e => {
   e.preventDefault();
   e.stopPropagation();
   if(!editMode) setEditMode(true);
   if(!Array.isArray(state.reminders)) state.reminders = [];
-  const existingBlank = state.reminders.findIndex(r => !String(r?.text || "").trim());
-  if(existingBlank < 0) {
-    const id = `r_${Date.now()}_${Math.random().toString(36).slice(2,7)}`;
-    state.reminders.push({id,text:""});
-    saveState();
+  const blank = state.reminders.findIndex(r => !String(r?.text || "").trim());
+  if(blank < 0) {
+    state.reminders.push({id:`r_${Date.now()}_${Math.random().toString(36).slice(2,7)}`,text:""});
     await renderAllLists();
   }
   requestAnimationFrame(() => focusNewestListRow("#reminderList",".reminder-text"));
-  updateListVisibility();
+});
+
+
+function renderTaskSteps() {
+  const container = $("#taskStepList");
+  if(!container) return;
+  const list = Array.isArray(state.taskSteps) ? state.taskSteps : [];
+  container.innerHTML = "";
+
+  const visible = editMode ? list : list.filter(item => String(item.text || "").trim());
+  container.dataset.count = String(Math.max(1, Math.min(8, visible.length || 1)));
+
+  list.forEach((item,i) => {
+    const blank = !String(item.text || "").trim();
+    if(!editMode && blank) return;
+
+    const row = document.createElement("div");
+    row.className = `task-step-row${blank ? " is-blank" : ""}`;
+    row.innerHTML = `
+      <textarea class="task-step-text" rows="2"
+        placeholder="Type a task step..."
+        ${editMode ? "" : "readonly"}>${escapeHtml(item.text || "")}</textarea>
+      <button class="task-step-remove" type="button" aria-label="Delete this task step">×</button>`;
+
+    const input = row.querySelector(".task-step-text");
+    const remove = row.querySelector(".task-step-remove");
+
+    input.addEventListener("input", () => {
+      state.taskSteps[i].text = input.value;
+      row.classList.toggle("is-blank", !input.value.trim());
+      saveState();
+    });
+
+    remove.addEventListener("click", () => {
+      state.taskSteps.splice(i,1);
+      if(editMode && state.taskSteps.length === 0) {
+        state.taskSteps.push({id:`t_${Date.now()}_editor`,text:""});
+      }
+      saveState();
+      renderTaskSteps();
+    });
+
+    container.appendChild(row);
+  });
+}
+
+$("#addTaskStepBtn")?.addEventListener("click", e => {
+  e.preventDefault();
+  e.stopPropagation();
+  if(!editMode) setEditMode(true);
+  if(!Array.isArray(state.taskSteps)) state.taskSteps = [];
+  const blank = state.taskSteps.findIndex(item => !String(item?.text || "").trim());
+  if(blank < 0) {
+    state.taskSteps.push({id:`t_${Date.now()}_${Math.random().toString(36).slice(2,7)}`,text:""});
+    renderTaskSteps();
+  }
+  requestAnimationFrame(() => {
+    const rows = [...$("#taskStepList").children];
+    const row = rows[rows.length - 1];
+    const input = row?.querySelector(".task-step-text");
+    input?.focus();
+    if(input) input.setSelectionRange(input.value.length,input.value.length);
+  });
 });
 
 /* Legacy blue Early Finisher strip was removed in v33.
@@ -843,7 +925,6 @@ legacyEarlyBigger?.addEventListener("click", e => {
 
 /* Task */
 const taskPreview = $("#taskPreview");
-const taskTextInput = $("#taskTextInput");
 const imageUrlInput = $("#imageUrlInput");
 const videoUrlInput = $("#videoUrlInput");
 const taskLoopToggle = $("#taskLoopToggle");
@@ -874,20 +955,14 @@ async function clearTaskMedia() {
   await mediaDelete(activeGrade).catch(()=>{});
 }
 async function renderTask() {
-  if(!taskPreview || !taskTextInput || !imageUrlInput || !videoUrlInput || !taskLoopToggle) return;
+  if(!taskPreview || !imageUrlInput || !videoUrlInput || !taskLoopToggle) return;
   if(taskObjectUrl) { URL.revokeObjectURL(taskObjectUrl); taskObjectUrl = ""; }
   taskPreview.innerHTML = "";
-  taskTextInput.value = state.task.text || "";
   imageUrlInput.value = state.task.mode === "image-url" ? state.task.url || "" : "";
   videoUrlInput.value = state.task.mode === "video-url" ? state.task.url || "" : "";
   taskLoopToggle.checked = !!state.task.loop;
 
-  if(state.task.mode === "text" && state.task.text) {
-    const d = document.createElement("div");
-    d.className = "task-text-preview";
-    d.textContent = state.task.text;
-    taskPreview.appendChild(d);
-  } else if(state.task.mode === "image-url" && state.task.url) {
+  if(state.task.mode === "image-url" && state.task.url) {
     const img = document.createElement("img");
     img.src = state.task.url;
     img.alt = "Task of the day";
@@ -933,16 +1008,13 @@ async function renderTask() {
       <svg class="empty-image-icon" viewBox="0 0 120 100" aria-hidden="true"><rect x="12" y="10" width="96" height="80" rx="10" fill="#fff" stroke="#2c91ce" stroke-width="6"/><circle cx="81" cy="34" r="10" fill="#FFD31B"/><path d="M24 77 48 51l17 17 12-12 21 21z" fill="#56A328"/><path d="M24 77 48 51l17 17" fill="none" stroke="#3e9bd6" stroke-width="4" stroke-linejoin="round"/></svg>
       Add a picture, video, GIF, or text here.</div>`;
   }
-  setTaskEditorMode(state.task.mode.startsWith("image") || state.task.mode === "upload-image" ? "image" :
-                    state.task.mode.startsWith("video") || state.task.mode === "upload-video" ? "video" : "text");
+  setTaskEditorMode(
+    state.task.mode.startsWith("video") || state.task.mode === "upload-video"
+      ? "video"
+      : "image"
+  );
   applyPanelFont("task");
 }
-taskTextInput?.addEventListener("input", async () => {
-  await clearTaskMedia();
-  state.task = {mode:"text", text:taskTextInput.value, url:"", urlKind:"", loop:false};
-  saveState();
-  renderTask();
-});
 $("#imageFileInput")?.addEventListener("change", async e => {
   const file = e.target.files?.[0];
   if(!file) return;
@@ -1089,7 +1161,7 @@ const FONT_MAP = {
   learning:{title:[".learning-title"], text:[".step-text"]},
   countdown:{title:[".countdown-panel .panel-title"], text:["#countdownDisplay","#endTimeInput"]},
   voice:{title:[".voice .panel-title"], text:[".voice-btn","#voiceLabel"]},
-  task:{title:[".task .panel-title",".early-finisher-label"], text:["#taskSub",".task-text-preview",".task-empty"]},
+  task:{title:[".task .panel-title"], text:[".task-step-text",".task-text-preview",".task-empty"]},
   reminders:{title:[".reminders .panel-title"], text:[".reminder-text"]},
   bathroom:{title:[".bathroom .panel-title"], text:["#bathroomCurrent",".table-btn"]}
 };
@@ -1151,12 +1223,43 @@ const pageOverlay = $("#pageOverlay");
 const grouperFrame = $("#grouperFrame");
 const cleanupFrame = $("#cleanupFrame");
 let activeOverlay = "";
+let cleanupStoppedThisVisit = false;
 
 function postGradeToGrouper() {
   try {
     grouperFrame?.contentWindow?.postMessage({type:"stem-grade",grade:activeGrade},"*");
   } catch(e) {}
 }
+function getCleanupVideo() {
+  try {
+    return cleanupFrame?.contentDocument?.getElementById("cleanupSong") || null;
+  } catch(e) {
+    return null;
+  }
+}
+function startCleanupVideo(restart=true) {
+  const video = getCleanupVideo();
+  if(!video) return false;
+  cleanupStoppedThisVisit = false;
+  try {
+    if(restart) video.currentTime = 0;
+    video.muted = false;
+    const result = video.play();
+    if(result?.catch) result.catch(()=>{});
+    return true;
+  } catch(e) {
+    return false;
+  }
+}
+function stopCleanupVideo() {
+  cleanupStoppedThisVisit = true;
+  const video = getCleanupVideo();
+  try { video?.pause(); } catch(e) {}
+}
+cleanupFrame?.addEventListener("load", () => {
+  if(activeOverlay === "cleanup") startCleanupVideo(true);
+});
+
 function showOverlay(kind) {
   const frame = kind === "grouper" ? grouperFrame : cleanupFrame;
   if(!pageOverlay || !frame) return;
@@ -1165,24 +1268,60 @@ function showOverlay(kind) {
   pageOverlay.setAttribute("aria-hidden","false");
   [grouperFrame,cleanupFrame].forEach(f => f?.classList.toggle("active", f === frame));
   if(kind === "grouper") postGradeToGrouper();
-  try { frame.contentWindow?.postMessage({type:"stem-overlay-show",kind,grade:activeGrade},"*"); } catch(e) {}
+  try {
+    frame.contentWindow?.postMessage({type:"stem-overlay-show",kind,grade:activeGrade},"*");
+    frame.contentWindow?.focus();
+  } catch(e) {}
+  if(kind === "cleanup") startCleanupVideo(true);
 }
 function hideOverlay() {
+  if(activeOverlay === "cleanup") {
+    try { getCleanupVideo()?.pause(); } catch(e) {}
+  }
   activeOverlay = "";
   pageOverlay?.classList.remove("active");
   pageOverlay?.setAttribute("aria-hidden","true");
   [grouperFrame,cleanupFrame].forEach(f => f?.classList.remove("active"));
+  try { window.focus(); } catch(e) {}
 }
 window.addEventListener("message", e => {
   if(e.data?.type === "stem-overlay-close") hideOverlay();
   if(e.data?.type === "stem-overlay-open") showOverlay(e.data.kind);
+  if(e.data?.type === "stem-nav") {
+    const source = e.data.source;
+    const key = e.data.key;
+    if(source === "grouper" && key === "ArrowRight") hideOverlay();
+    if(source === "cleanup" && key === "ArrowLeft") hideOverlay();
+  }
+  if(e.data?.type === "stem-cleanup-stop") stopCleanupVideo();
 });
 
 function isTypingTarget(el) {
   return !!el && (el.matches?.("input,textarea,select") || el.isContentEditable);
 }
 document.addEventListener("keydown", e => {
-  if(activeOverlay || isTypingTarget(e.target)) return;
+  if(isTypingTarget(e.target)) return;
+
+  /* If the cleanup overlay has focus in the parent document, Space still
+     pauses/resumes the cleanup song. The iframe has the same handler too. */
+  if(activeOverlay === "cleanup" && (e.code === "Space" || e.key === " ")) {
+    e.preventDefault();
+    stopCleanupVideo();
+    return;
+  }
+
+  if(activeOverlay) {
+    if(activeOverlay === "grouper" && e.key === "ArrowRight") {
+      e.preventDefault();
+      hideOverlay();
+    } else if(activeOverlay === "cleanup" && e.key === "ArrowLeft") {
+      e.preventDefault();
+      hideOverlay();
+    }
+    return;
+  }
+
+  /* Main Task Screen: LEFT = Grouper, RIGHT = Clean Up. */
   if(e.key === "ArrowLeft") {
     e.preventDefault();
     showOverlay("grouper");
@@ -1290,14 +1429,13 @@ async function renderAll() {
   syncEditableText();
   renderEarlyFinisher();
   $("#objectiveInput").value = state.objective || "";
-  const taskSub = $("#taskSub");
-  if(taskSub) taskSub.value = state.taskSub || "";
   endTimeInput.value = state.countdown?.endTime || "";
   updatePeriodButtons();
   startClassCountdownClock();
   renderVoice();
   await renderSectionIcons();
   await renderAllLists();
+  renderTaskSteps();
   renderTableLabels();
   await renderTask();
   applyAllFonts();
