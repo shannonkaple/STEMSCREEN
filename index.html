@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>STEM Task Screen</title>
-<link rel="icon" type="image/png" href="./star.png?v=32">
-<link rel="stylesheet" href="./styles.css?v=32">
+<link rel="icon" type="image/png" href="./star.png?v=33">
+<link rel="stylesheet" href="./styles.css?v=33">
 </head>
 <body>
 <div class="board" id="board">
@@ -100,10 +100,11 @@
       <img class="task-star-img" src="./star.png" alt="">
       <span data-edit-key="titles.task">TASK OF THE DAY</span>
     </div>
-    <div class="task-sub editable-block" id="taskSub" data-edit-key="taskSub" data-placeholder="Type what students need to do..."></div>
+    <div class="task-content-grid">
+      <div class="task-sub editable-block" id="taskSub" data-edit-key="taskSub" data-placeholder="Type what students need to do..."></div>
 
-    <div class="task-stage">
-      <div class="task-editor edit-only">
+      <div class="task-stage">
+        <div class="task-editor edit-only">
         <div class="mode-row">
           <button class="mode-btn" data-mode="text">TEXT</button>
           <button class="mode-btn" data-mode="image">IMAGE / GIF</button>
@@ -128,20 +129,12 @@
         </div>
         <button class="clear-task" id="clearTaskBtn" type="button">CLEAR TASK MEDIA</button>
       </div>
-      <div class="task-preview" id="taskPreview">
-        <div class="task-empty">
-          <svg class="empty-image-icon" viewBox="0 0 120 100" aria-hidden="true"><rect x="12" y="10" width="96" height="80" rx="10" fill="#fff" stroke="#2c91ce" stroke-width="6"/><circle cx="81" cy="34" r="10" fill="#FFD31B"/><path d="M24 77 48 51l17 17 12-12 21 21z" fill="#56A328"/><path d="M24 77 48 51l17 17" fill="none" stroke="#3e9bd6" stroke-width="4" stroke-linejoin="round"/></svg>
-          Add a picture, video, GIF, or text here.
+        <div class="task-preview" id="taskPreview">
+          <div class="task-empty">
+            <svg class="empty-image-icon" viewBox="0 0 120 100" aria-hidden="true"><rect x="12" y="10" width="96" height="80" rx="10" fill="#fff" stroke="#2c91ce" stroke-width="6"/><circle cx="81" cy="34" r="10" fill="#FFD31B"/><path d="M24 77 48 51l17 17 12-12 21 21z" fill="#56A328"/><path d="M24 77 48 51l17 17" fill="none" stroke="#3e9bd6" stroke-width="4" stroke-linejoin="round"/></svg>
+            Add a picture, video, GIF, or text here.
+          </div>
         </div>
-      </div>
-    </div>
-
-    <div class="early-finisher-wrap" id="earlyFinisherWrap">
-      <div class="early-finisher-label" data-edit-key="titles.earlyFinisher">EARLY FINISHER</div>
-      <div class="early-finisher-text" id="earlyFinisherText" data-edit-key="earlyFinisher" data-placeholder="Type what students should do next..."></div>
-      <div class="early-finisher-size edit-only">
-        <button type="button" id="earlyFinisherSmaller">A−</button>
-        <button type="button" id="earlyFinisherBigger">A+</button>
       </div>
     </div>
   </section>
@@ -152,8 +145,8 @@
       <span>TEXT</span><button data-font-part="text" data-font-delta="-2">A−</button><button data-font-part="text" data-font-delta="2">A+</button>
     </div>
     <div class="panel-title">
-      <svg class="title-icon" viewBox="0 0 64 64" aria-hidden="true"><rect x="14" y="13" width="36" height="44" rx="5" fill="#fff" stroke="#000" stroke-width="3"/><rect x="22" y="7" width="20" height="12" rx="4" fill="#FFD31B" stroke="#000" stroke-width="3"/><path d="m21 31 4 4 7-8M21 44l4 4 7-8M36 31h9M36 44h9" fill="none" stroke="#56A328" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      <span data-edit-key="titles.reminders">REMINDERS</span>
+      <img class="title-star-icon" src="./star.png" alt="">
+      <span data-edit-key="titles.reminders">EARLY FINISHERS</span>
     </div>
     <div class="reminder-list" id="reminderList"></div>
     <div class="list-edit-bar edit-only">
@@ -190,8 +183,8 @@
   </section>
 
 
-  <a class="dashboard-nav grouper-nav" href="./grouper.html?v=29">RAINBOW GROUPER</a>
-  <a class="page-arrow page-arrow-right" href="./cleanup.html?v=29" aria-label="Open clean up board">→</a>
+  <a class="dashboard-nav grouper-nav" href="./grouper.html?v=33">RAINBOW GROUPER</a>
+  <a class="page-arrow page-arrow-right" href="./cleanup.html?v=33" aria-label="Open clean up board">→</a>
 
   <div class="grade-switch" aria-label="Grade profile">
     <button class="grade-btn" data-grade="first" type="button">1ST GRADE</button>
@@ -204,6 +197,6 @@
     <button class="utility" id="editToggle" type="button">EDIT</button>
   </div>
 </div>
-<script src="./app.js?v=32"></script>
+<script src="./app.js?v=33"></script>
 </body>
 </html>

@@ -1290,3 +1290,223 @@ body.edit-mode .reminders .list-edit-bar{
 .panel-tools span{
   font-weight:900 !important;
 }
+
+
+/* ============================================================
+   v33 — PROJECTOR-FIRST LAYOUT
+   ============================================================ */
+
+/* TIME LEFT gets more width; VOICE gets less. */
+.countdown-panel{
+  grid-column:8/11 !important;
+  grid-row:1/3 !important;
+}
+.voice{
+  grid-column:11/13 !important;
+  grid-row:1/3 !important;
+  padding:6px 6px 5px !important;
+}
+.voice .panel-title{
+  font-size:clamp(22px,1.9vw,35px) !important;
+}
+.voice-buttons{
+  gap:3px !important;
+  padding:5px 3px 6px !important;
+}
+.voice-btn{
+  font-size:clamp(16px,1.45vw,26px) !important;
+  border-width:2.5px !important;
+}
+.voice-label{
+  font-size:clamp(18px,1.65vw,30px) !important;
+  min-height:28px !important;
+}
+
+/* Right column: small Early Finishers, large Bathroom caller. */
+.reminders{
+  grid-column:8/13 !important;
+  grid-row:3/5 !important;
+  padding:5px 8px !important;
+  gap:3px !important;
+}
+.bathroom{
+  grid-column:8/13 !important;
+  grid-row:5/9 !important;
+  padding:7px 10px !important;
+}
+.reminders .panel-title{
+  font-size:clamp(23px,2.15vw,38px) !important;
+}
+.title-star-icon{
+  width:clamp(25px,2.2vw,40px);
+  height:auto;
+  object-fit:contain;
+}
+
+/* Early Finishers rows: image on the left if one exists; otherwise bullet. */
+.reminder-list{
+  gap:4px !important;
+}
+.reminder-row{
+  min-height:0 !important;
+  grid-template-columns:24px 54px minmax(0,1fr) 23px !important;
+  gap:5px !important;
+  padding:3px 6px !important;
+}
+.reminder-row.has-image .list-marker{
+  display:none !important;
+}
+.reminder-row.has-image{
+  grid-template-columns:54px minmax(0,1fr) 23px !important;
+}
+.reminder-row.no-image{
+  grid-template-columns:24px minmax(0,1fr) 23px !important;
+}
+.reminder-pic-wrap,
+.reminder-pic{
+  width:50px !important;
+  height:50px !important;
+}
+.reminder-text{
+  min-height:38px !important;
+  max-height:48px !important;
+  font-size:clamp(13px,1.05vw,18px) !important;
+  text-align:left !important;
+  direction:ltr !important;
+  padding:6px 6px 2px !important;
+}
+.reminder-list .list-marker{
+  align-self:center !important;
+  justify-self:center !important;
+  font-size:20px !important;
+}
+body:not(.edit-mode) .reminder-row.no-image .reminder-pic-wrap{
+  display:none !important;
+}
+/* In edit mode always show the picture-add square without crushing the text. */
+body.edit-mode .reminder-row,
+body.edit-mode .reminder-row.no-image{
+  grid-template-columns:24px 50px minmax(0,1fr) 23px !important;
+}
+body.edit-mode .reminder-row.has-image{
+  grid-template-columns:50px minmax(0,1fr) 23px !important;
+}
+body.edit-mode .reminder-row.has-image .list-marker{
+  display:none !important;
+}
+
+/* Bathroom: make the current called table readable from the back of the room. */
+.bathroom{
+  display:grid !important;
+  grid-template-rows:auto minmax(0,1fr) auto !important;
+}
+.bathroom-title{
+  font-size:clamp(30px,3vw,54px) !important;
+}
+.bathroom-current-zone{
+  padding:4px 7% 8px !important;
+}
+.bathroom-current{
+  width:100% !important;
+  max-width:none !important;
+  min-height:122px !important;
+  font-size:clamp(72px,7.2vw,128px) !important;
+  line-height:.82 !important;
+  border-width:5px !important;
+  border-radius:22px !important;
+}
+.table-btn{
+  height:39px !important;
+  font-size:clamp(10px,.88vw,15px) !important;
+}
+
+/* Blue task: directions on LEFT, media BIG on RIGHT. */
+.task{
+  grid-template-rows:auto minmax(0,1fr) !important;
+  gap:6px !important;
+}
+.task-content-grid{
+  min-height:0;
+  display:grid;
+  grid-template-columns:minmax(150px,22%) minmax(0,1fr);
+  gap:7px;
+}
+.task-sub{
+  width:100% !important;
+  height:100% !important;
+  min-height:0 !important;
+  max-height:none !important;
+  border:3px solid rgba(0,0,0,.28) !important;
+  border-radius:18px !important;
+  padding:12px 10px !important;
+  display:flex !important;
+  align-items:flex-start !important;
+  justify-content:flex-start !important;
+  text-align:left !important;
+  overflow:hidden !important;
+  font-size:clamp(17px,1.35vw,24px) !important;
+  line-height:1.05 !important;
+}
+.task-stage{
+  border-radius:18px !important;
+  min-height:0 !important;
+}
+.task-preview{
+  padding:5px !important;
+}
+.task-preview img,
+.task-preview video{
+  max-width:100% !important;
+  max-height:100% !important;
+  width:100% !important;
+  height:100% !important;
+  object-fit:contain !important;
+}
+.task-preview iframe{
+  width:100% !important;
+  height:100% !important;
+}
+
+/* Rectangular media editor, not a pill-heavy bar. */
+.task-editor{
+  left:6px !important;
+  right:6px !important;
+  top:6px !important;
+  border-radius:12px !important;
+  padding:6px !important;
+}
+.mode-row{
+  gap:4px !important;
+  margin-bottom:4px !important;
+}
+.mode-btn,
+.file-btn,
+.clear-task{
+  border-radius:8px !important;
+  padding:5px 8px !important;
+  font-size:9px !important;
+}
+.task-control input[type="url"],
+.task-control textarea{
+  border-radius:8px !important;
+}
+
+/* old blue Early Finisher strip is gone */
+.early-finisher-wrap{
+  display:none !important;
+}
+
+/* Footer remains clear of content. */
+.board{
+  padding-bottom:62px !important;
+}
+
+@media(max-width:1000px){
+  .task-content-grid{
+    grid-template-columns:minmax(125px,24%) minmax(0,1fr);
+  }
+  .bathroom-current{
+    min-height:90px !important;
+    font-size:clamp(52px,6vw,90px) !important;
+  }
+}

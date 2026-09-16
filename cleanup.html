@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Clean Up</title>
-<link rel="icon" type="image/png" href="./star.png?v=32">
+<link rel="icon" type="image/png" href="./star.png?v=33">
 <style>
 @font-face{font-family:"KAHomebodyClub";src:url("./KAHomebodyClub.ttf") format("truetype");font-display:swap}
 @font-face{font-family:"VAGTaskscreen";src:url("./VAG-Rounded-Std-Black_47296.ttf") format("truetype");font-display:swap}
@@ -172,7 +172,7 @@ body.presentation-mode{
 </style>
 </head>
 <body>
-<a class="back-arrow" href="./index.html?v=30" aria-label="Back to Task Screen">←</a>
+<a class="back-arrow" href="./index.html?v=33" aria-label="Back to Task Screen">←</a>
 <button class="fullscreen-btn" id="cleanupFullscreen" type="button">FULL SCREEN</button>
 
 <main class="cleanup-shell">
@@ -229,5 +229,31 @@ body.presentation-mode{
   });
 })();
 </script>
+
+<script>
+(() => {
+  const go = url => {
+    if(document.fullscreenElement || document.body.classList.contains("presentation-mode")) {
+      sessionStorage.setItem("stemPresentationMode","1");
+    }
+    window.location.href = url;
+  };
+  document.querySelector(".back-arrow")?.addEventListener("click", e => {
+    e.preventDefault(); go("./index.html?v=33");
+  });
+  document.addEventListener("keydown", e => {
+    const t=e.target;
+    if(t && (t.matches?.("input,textarea,select") || t.isContentEditable)) return;
+    if(e.key === "ArrowLeft") {
+      e.preventDefault();
+      go("./index.html?v=33");
+    }
+  });
+  if(sessionStorage.getItem("stemPresentationMode")==="1") {
+    document.body.classList.add("presentation-mode");
+  }
+})();
+</script>
+
 </body>
 </html>

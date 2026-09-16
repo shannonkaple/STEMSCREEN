@@ -31,7 +31,7 @@ function defaultState() {
       voice:"VOICE LEVEL",
       countdown:"TIME LEFT",
       task:"TASK OF THE DAY",
-      reminders:"STEPS",
+      reminders:"EARLY FINISHERS",
       bathroom:"BATHROOM + WATER"
     },
     objective:"",
@@ -107,6 +107,7 @@ function loadState(grade) {
   if(!merged.listMarkers || typeof merged.listMarkers !== "object") merged.listMarkers = {success:"star",reminders:"star"};
   if(!["star","bullet"].includes(merged.listMarkers.success)) merged.listMarkers.success = "star";
   if(!["star","bullet"].includes(merged.listMarkers.reminders)) merged.listMarkers.reminders = "star";
+  if(["STEPS","REMINDERS"].includes(String(merged.titles?.reminders || "").toUpperCase())) merged.titles.reminders = "EARLY FINISHERS";
   if(typeof merged.task?.loop !== "boolean") merged.task.loop = false;
   if(typeof merged.objectiveTextAdjust !== "number") merged.objectiveTextAdjust = 0;
   if(typeof merged.earlyFinisher !== "string") merged.earlyFinisher = "";
@@ -322,6 +323,48 @@ $("#voiceLabel").addEventListener("input", () => {
 const endTimeInput = $("#endTimeInput");
 const countdownDisplay = $("#countdownDisplay");
 let classCountdownTimer = null;
+let previousCountdownRemaining = null;
+let lastAlarmKey = "";
+
+function playTimerAlarm() {
+  try {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    const ctx = new Ctx();
+    const now = ctx.currentTime + .02;
+    [0, .42, .84].forEach((offset, idx) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = idx % 2 ? "square" : "triangle";
+      osc.frequency.setValueAtTime(idx % 2 ? 880 : 1046.5, now + offset);
+      gain.gain.setValueAtTime(.0001, now + offset);
+      gain.gain.exponentialRampToValueAtTime(.24, now + offset + .02);
+      gain.gain.exponentialRampToValueAtTime(.0001, now + offset + .28);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now + offset);
+      osc.stop(now + offset + .3);
+    });
+  } catch(e) {}
+}
+
+function showCleanupPrompt() {
+  if(document.getElementById("cleanupPrompt")) return;
+  const overlay = document.createElement("div");
+  overlay.id = "cleanupPrompt";
+  overlay.innerHTML = `
+    <div class="cleanup-prompt-card">
+      <div class="cleanup-prompt-title">TIME'S UP!</div>
+      <div class="cleanup-prompt-text">Ready to start the clean up song?</div>
+      <div class="cleanup-prompt-actions">
+        <button type="button" id="stayHereBtn">STAY HERE</button>
+        <button type="button" id="goCleanupBtn">CLEAN UP →</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  $("#stayHereBtn").onclick = () => overlay.remove();
+  $("#goCleanupBtn").onclick = () => navigatePage("./cleanup.html?v=33");
+}
+
 
 function formatRemaining(seconds) {
   seconds = Math.max(0, Math.min(3599, Math.floor(seconds)));
@@ -343,15 +386,24 @@ function secondsUntilEnd(endTime) {
 function updateClassCountdown() {
   const endTime = state.countdown?.endTime || "";
   const remaining = secondsUntilEnd(endTime);
-  if(remaining === null) {
+
+  if(remaining === null || remaining <= 0) {
     countdownDisplay.textContent = "--:--";
-    return;
+  } else {
+    countdownDisplay.textContent = formatRemaining(remaining);
   }
-  if(remaining <= 0) {
-    countdownDisplay.textContent = "--:--";
-    return;
+
+  const alarmKey = `${new Date().toDateString()}|${endTime}`;
+  if(previousCountdownRemaining !== null &&
+     previousCountdownRemaining > 0 &&
+     remaining === 0 &&
+     endTime &&
+     lastAlarmKey !== alarmKey) {
+    lastAlarmKey = alarmKey;
+    playTimerAlarm();
+    showCleanupPrompt();
   }
-  countdownDisplay.textContent = formatRemaining(remaining);
+  previousCountdownRemaining = remaining;
 }
 endTimeInput.addEventListener("input", () => {
   state.countdown.endTime = endTimeInput.value;
@@ -507,7 +559,7 @@ async function renderChecklist({
       </div>` : "";
 
     const row = document.createElement("div");
-    row.className = `${rowClass}${blank ? " is-blank" : ""}${showPictures && !hasImage ? " no-image" : ""}`;
+    row.className = `${rowClass}${blank ? " is-blank" : ""}${showPictures && hasImage ? " has-image" : ""}${showPictures && !hasImage ? " no-image" : ""}`;
     row.innerHTML = `
       <div class="list-marker" aria-hidden="true">${markerChar(markerTarget)}</div>
       ${pictureHtml}
@@ -595,7 +647,7 @@ async function renderAllLists() {
     listName:"reminders",containerId:"#reminderList",mediaKind:"reminder",
     rowClass:"reminder-row",picClass:"reminder-pic",
     textClass:"reminder-text",removeClass:"reminder-remove",
-    placeholder:"Type a step...",markerTarget:"reminders",showPictures:true
+    placeholder:"Type an early finisher...",markerTarget:"reminders",showPictures:true
   });
   updateListVisibility();
   applyPanelFont("learning");
@@ -956,6 +1008,65 @@ if(objectiveTextSmaller && objectiveTextBigger) {
 
 
 
+
+/* Page navigation / presentation preference */
+function navigationWantsPresentation() {
+  return isPageFullscreen() || document.body.classList.contains("presentation-mode");
+}
+function navigatePage(url) {
+  if(navigationWantsPresentation()) sessionStorage.setItem("stemPresentationMode","1");
+  else sessionStorage.removeItem("stemPresentationMode");
+  window.location.href = url;
+}
+function isTypingTarget(el) {
+  return !!el && (el.matches?.("input,textarea,select") || el.isContentEditable);
+}
+document.addEventListener("keydown", e => {
+  if(isTypingTarget(e.target)) return;
+  if(e.key === "ArrowLeft") {
+    e.preventDefault();
+    navigatePage("./grouper.html?v=33");
+  } else if(e.key === "ArrowRight") {
+    e.preventDefault();
+    navigatePage("./cleanup.html?v=33");
+  }
+});
+document.querySelector(".grouper-nav")?.addEventListener("click", e => {
+  e.preventDefault();
+  navigatePage("./grouper.html?v=33");
+});
+document.querySelector(".page-arrow-right")?.addEventListener("click", e => {
+  e.preventDefault();
+  navigatePage("./cleanup.html?v=33");
+});
+if(sessionStorage.getItem("stemPresentationMode") === "1") {
+  document.body.classList.add("presentation-mode");
+}
+
+const cleanupPromptStyle = document.createElement("style");
+cleanupPromptStyle.textContent = `
+#cleanupPrompt{position:fixed;inset:0;z-index:999999;background:#0007;display:grid;place-items:center;padding:20px}
+.cleanup-prompt-card{width:min(520px,90vw);background:#fff;border:5px solid #000;border-radius:28px;padding:22px;text-align:center;box-shadow:0 18px 60px #0005}
+.cleanup-prompt-title{font-family:"KAHomebodyClub","VAGTaskscreen",sans-serif;font-size:clamp(44px,5vw,74px);color:#F3237C;-webkit-text-stroke:1.5px #000;paint-order:stroke fill}
+.cleanup-prompt-text{font-size:clamp(18px,2vw,28px);margin:10px 0 18px}
+.cleanup-prompt-actions{display:flex;gap:10px;justify-content:center}
+.cleanup-prompt-actions button{border:3px solid #000;border-radius:999px;background:#fff;padding:10px 18px;font-size:15px;font-weight:900}
+#goCleanupBtn{background:#91D448}
+`;
+document.head.appendChild(cleanupPromptStyle);
+
+/* Same-origin tabs/windows on this device update one another. */
+window.addEventListener("storage", e => {
+  if(!e.key) return;
+  if(e.key === STORAGE_PREFIX + activeGrade || e.key === ACTIVE_GRADE_KEY) {
+    const nextGrade = localStorage.getItem(ACTIVE_GRADE_KEY) || activeGrade;
+    if(nextGrade === activeGrade) {
+      state = loadState(activeGrade);
+      renderAll().catch(()=>{});
+    }
+  }
+});
+
 /* Page fullscreen */
 function isPageFullscreen(){
   return !!(document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement);
@@ -998,8 +1109,11 @@ if(fullscreenToggle){
       if(!ok) document.body.classList.add("presentation-mode");
     }
     syncFullscreenButton();
-    if(document.body.classList.contains("presentation-mode")) {
+    if(isPageFullscreen() || document.body.classList.contains("presentation-mode")) {
+      sessionStorage.setItem("stemPresentationMode","1");
       fullscreenToggle.textContent = "EXIT FULL SCREEN";
+    } else {
+      sessionStorage.removeItem("stemPresentationMode");
     }
   });
   ["fullscreenchange","webkitfullscreenchange","MSFullscreenChange"].forEach(evt=>document.addEventListener(evt,syncFullscreenButton));
