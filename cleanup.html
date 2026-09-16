@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Clean Up</title>
-<link rel="icon" type="image/png" href="./star.png?v=33">
+<link rel="icon" type="image/png" href="./star.png?v=35">
 <style>
 @font-face{font-family:"KAHomebodyClub";src:url("./KAHomebodyClub.ttf") format("truetype");font-display:swap}
 @font-face{font-family:"VAGTaskscreen";src:url("./VAG-Rounded-Std-Black_47296.ttf") format("truetype");font-display:swap}
@@ -26,11 +26,9 @@ html,body{
   overflow:hidden;
   background:#fff;
 }
-body{
-  font-family:"VAGTaskscreen",Arial,sans-serif;
-}
+body{font-family:"VAGTaskscreen",Arial,sans-serif}
 
-/* EXACT SAME TIGHT RAINBOW BORDER METHOD AS GROUPER */
+/* Same tight rainbow border as the Grouper. */
 body:before{
   content:"";
   position:fixed;
@@ -52,73 +50,96 @@ body:before{
   inset:0;
   padding:
     calc(2.2vh + 72px)
-    calc(1.4vw + 76px)
-    calc(2.2vh + 76px);
+    calc(1.4vw + 78px)
+    calc(2.2vh + 74px);
   display:grid;
-  grid-template-rows:auto minmax(0,1fr);
-  gap:16px;
+  grid-template-rows:minmax(150px,30%) minmax(0,1fr);
+  gap:18px;
   background:#fff;
 }
 
+/* All white space above the picture is used by this row. */
 .top-row{
   min-height:0;
-  display:flex;
-  justify-content:flex-end;
-  align-items:flex-start;
-  gap:22px;
-  padding-top:2px;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(320px,31vw);
+  gap:24px;
+  align-items:stretch;
 }
 
-.cleanup-title{
-  margin-top:18px;
-  font-family:"KAHomebodyClub","VAGTaskscreen",sans-serif;
-  font-size:clamp(58px,6.5vw,104px);
-  line-height:.9;
-  color:#FAB910;
-  -webkit-text-stroke:2.5px #000;
-  paint-order:stroke fill;
-  white-space:nowrap;
-}
-
-.video-wrap{
-  width:min(31vw,470px);
-  aspect-ratio:16/9;
-  border:5px solid #000;
-  border-radius:18px;
-  overflow:hidden;
-  background:#000;
-  box-shadow:0 5px 16px rgba(0,0,0,.22);
-  flex:0 0 auto;
-}
-.video-wrap video{
-  width:100%;
-  height:100%;
-  display:block;
-}
-
-.steps-card{
-  min-height:0;
-  align-self:end;
-  margin-bottom:0;
-  border:7px solid #000;
-  border-radius:28px;
-  background:#fff;
-  padding:22px 28px 26px;
+.cleanup-title-wrap{
+  min-width:0;
   display:flex;
   align-items:center;
   justify-content:center;
   overflow:hidden;
+  padding:0 8px;
+}
+
+.cleanup-title{
+  width:100%;
+  text-align:center;
+  font-family:"KAHomebodyClub","VAGTaskscreen",sans-serif;
+  font-size:clamp(76px,8.5vw,150px);
+  line-height:.82;
+  color:var(--yellow);
+  -webkit-text-stroke:3px #000;
+  paint-order:stroke fill;
+  text-shadow:
+    -2px -2px 0 #000,
+     2px -2px 0 #000,
+    -2px  2px 0 #000,
+     2px  2px 0 #000;
+  white-space:nowrap;
+  animation:cleanupFlash .95s ease-in-out infinite;
+  transform-origin:center;
+}
+
+@keyframes cleanupFlash{
+  0%,100%{opacity:1;transform:scale(1);filter:brightness(1)}
+  50%{opacity:.38;transform:scale(1.035);filter:brightness(1.15)}
+}
+
+.video-wrap{
+  width:100%;
+  height:100%;
+  min-height:0;
+  display:flex;
+  align-items:flex-start;
+  justify-content:flex-end;
+}
+.video-wrap video{
+  width:100%;
+  max-height:100%;
+  aspect-ratio:16/9;
+  object-fit:contain;
+  display:block;
+  background:#000;
+  border:5px solid #000;
+  border-radius:18px;
+  box-shadow:0 5px 16px rgba(0,0,0,.22);
+}
+
+/* Picture gets its own lower region and is intentionally a little smaller. */
+.steps-card{
+  min-height:0;
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
+  padding:4px 40px 12px;
+  overflow:hidden;
 }
 .steps-card img{
   display:block;
-  max-width:100%;
-  max-height:100%;
-  width:100%;
+  width:auto;
+  max-width:92%;
   height:auto;
+  max-height:92%;
   object-fit:contain;
+  object-position:center bottom;
 }
 
-/* Controls stay INSIDE the inner purple edge. */
+/* Controls remain inside the inner rainbow. */
 .back-arrow,
 .fullscreen-btn{
   position:fixed;
@@ -160,24 +181,33 @@ body.presentation-mode{
 @media(max-width:1000px){
   .cleanup-shell{
     padding:
-      calc(2.2vh + 66px)
+      calc(2.2vh + 64px)
       calc(1.4vw + 68px)
-      calc(2.2vh + 68px);
+      calc(2.2vh + 66px);
+    grid-template-rows:minmax(120px,29%) minmax(0,1fr);
+    gap:12px;
   }
-  .top-row{gap:14px}
-  .cleanup-title{font-size:clamp(46px,5.7vw,74px)}
-  .video-wrap{width:29vw}
-  .steps-card{padding:16px 20px 20px}
+  .top-row{
+    grid-template-columns:minmax(0,1fr) minmax(260px,31vw);
+    gap:14px;
+  }
+  .cleanup-title{font-size:clamp(58px,7vw,98px)}
+  .steps-card{padding:2px 22px 8px}
+  .steps-card img{max-width:90%;max-height:90%}
 }
 </style>
 </head>
+
 <body>
-<a class="back-arrow" href="./index.html?v=33" aria-label="Back to Task Screen">←</a>
+<a class="back-arrow" href="./index.html?v=35" aria-label="Back to Task Screen">←</a>
 <button class="fullscreen-btn" id="cleanupFullscreen" type="button">FULL SCREEN</button>
 
 <main class="cleanup-shell">
   <div class="top-row">
-    <div class="cleanup-title">CLEAN UP</div>
+    <div class="cleanup-title-wrap">
+      <div class="cleanup-title">CLEAN UP</div>
+    </div>
+
     <div class="video-wrap">
       <video id="cleanupSong" src="./cleanup-song.mp4" controls autoplay preload="auto" playsinline></video>
     </div>
@@ -198,7 +228,20 @@ body.presentation-mode{
   window.addEventListener("load", tryPlay, {once:true});
   document.addEventListener("pointerdown", tryPlay, {once:true});
 
+  const isTypingTarget = el =>
+    !!el && (el.matches?.("input,textarea,select,button") || el.isContentEditable);
+
+  /* SPACEBAR instantly pauses/resumes the clean-up song. */
+  document.addEventListener("keydown", e => {
+    if(e.code !== "Space" || isTypingTarget(e.target)) return;
+    e.preventDefault();
+    if(!video) return;
+    if(video.paused) video.play().catch(()=>{});
+    else video.pause();
+  });
+
   const isFs = () => !!(document.fullscreenElement || document.webkitFullscreenElement);
+
   fs.addEventListener("click", async () => {
     if(isFs()){
       try{
@@ -227,33 +270,31 @@ body.presentation-mode{
   document.addEventListener("fullscreenchange", () => {
     fs.textContent = isFs() ? "EXIT FULL SCREEN" : "FULL SCREEN";
   });
-})();
-</script>
 
-<script>
-(() => {
   const go = url => {
-    if(document.fullscreenElement || document.body.classList.contains("presentation-mode")) {
+    if(isFs() || document.body.classList.contains("presentation-mode")){
       sessionStorage.setItem("stemPresentationMode","1");
     }
     window.location.href = url;
   };
+
   document.querySelector(".back-arrow")?.addEventListener("click", e => {
-    e.preventDefault(); go("./index.html?v=33");
+    e.preventDefault();
+    go("./index.html?v=35");
   });
+
   document.addEventListener("keydown", e => {
-    const t=e.target;
-    if(t && (t.matches?.("input,textarea,select") || t.isContentEditable)) return;
-    if(e.key === "ArrowLeft") {
+    if(isTypingTarget(e.target)) return;
+    if(e.key === "ArrowLeft"){
       e.preventDefault();
-      go("./index.html?v=33");
+      go("./index.html?v=35");
     }
   });
-  if(sessionStorage.getItem("stemPresentationMode")==="1") {
+
+  if(sessionStorage.getItem("stemPresentationMode") === "1"){
     document.body.classList.add("presentation-mode");
   }
 })();
 </script>
-
 </body>
 </html>
