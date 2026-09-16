@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>STEM Task Screen</title>
-<link rel="icon" type="image/png" href="./star.png?v=33">
-<link rel="stylesheet" href="./styles.css?v=33">
+<link rel="icon" type="image/png" href="./star.png?v=38">
+<link rel="stylesheet" href="./styles.css?v=38">
 </head>
 <body>
 <div class="board" id="board">
@@ -82,11 +82,11 @@
     </div>
     <div class="panel-title"><span data-edit-key="titles.voice">VOICE LEVEL</span></div>
     <div class="voice-buttons" id="voiceButtons">
-      <button class="voice-btn" data-level="0" style="--vc:#F3237C">0</button>
-      <button class="voice-btn" data-level="1" style="--vc:#F47607">1</button>
-      <button class="voice-btn" data-level="2" style="--vc:#FAB910">2</button>
-      <button class="voice-btn" data-level="3" style="--vc:#56A328">3</button>
-      <button class="voice-btn" data-level="4" style="--vc:#22B8F4">4</button>
+      <button type="button" class="voice-btn" data-level="0" style="--vc:#F3237C">0</button>
+      <button type="button" class="voice-btn" data-level="1" style="--vc:#F47607">1</button>
+      <button type="button" class="voice-btn" data-level="2" style="--vc:#FAB910">2</button>
+      <button type="button" class="voice-btn" data-level="3" style="--vc:#56A328">3</button>
+      <button type="button" class="voice-btn" data-level="4" style="--vc:#22B8F4">4</button>
     </div>
     <div class="voice-label" id="voiceLabel" data-edit-voice-label>TABLE TALK</div>
   </section>
@@ -101,14 +101,14 @@
       <span data-edit-key="titles.task">TASK OF THE DAY</span>
     </div>
     <div class="task-content-grid">
-      <div class="task-sub editable-block" id="taskSub" data-edit-key="taskSub" data-placeholder="Type what students need to do..."></div>
+      <textarea class="task-sub" id="taskSub" rows="6" placeholder="Type what students need to do..." aria-label="Task directions"></textarea>
 
       <div class="task-stage">
         <div class="task-editor edit-only">
         <div class="mode-row">
-          <button class="mode-btn" data-mode="text">TEXT</button>
-          <button class="mode-btn" data-mode="image">IMAGE / GIF</button>
-          <button class="mode-btn" data-mode="video">VIDEO</button>
+          <button type="button" class="mode-btn" data-mode="text">TEXT</button>
+          <button type="button" class="mode-btn" data-mode="image">IMAGE / GIF</button>
+          <button type="button" class="mode-btn" data-mode="video">VIDEO</button>
         </div>
         <div class="task-control" data-control="text">
           <textarea id="taskTextInput" placeholder="Type the task, directions, question, etc."></textarea>
@@ -164,7 +164,12 @@
     </div>
     <div class="panel-title bathroom-title"><span data-edit-key="titles.bathroom">BATHROOM + WATER</span></div>
     <div class="bathroom-current-zone">
-      <div id="bathroomCurrent" class="bathroom-current is-empty"></div>
+      <div class="bathroom-current-layout">
+        <div class="bathroom-current-icon-wrap">
+          <img class="bathroom-current-icon" src="./bathroom-water-icon.png" alt="Bathrooms and water">
+        </div>
+        <div id="bathroomCurrent" class="bathroom-current is-empty"></div>
+      </div>
     </div>
     <div class="bathroom-bottom-row">
       <div class="table-grid one-row" id="tableGrid">
@@ -183,8 +188,8 @@
   </section>
 
 
-  <a class="dashboard-nav grouper-nav" href="./grouper.html?v=33">RAINBOW GROUPER</a>
-  <a class="page-arrow page-arrow-right" href="./cleanup.html?v=33" aria-label="Open clean up board">→</a>
+  <a class="dashboard-nav grouper-nav" href="./grouper.html?v=38">RAINBOW GROUPER</a>
+  <a class="page-arrow page-arrow-right" href="./cleanup.html?v=38" aria-label="Open clean up board">→</a>
 
   <div class="grade-switch" aria-label="Grade profile">
     <button class="grade-btn" data-grade="first" type="button">1ST GRADE</button>
@@ -197,6 +202,6 @@
     <button class="utility" id="editToggle" type="button">EDIT</button>
   </div>
 </div>
-<script src="./app.js?v=33"></script>
+<script src="./app.js?v=38"></script>
 </body>
 </html>

@@ -14,7 +14,17 @@ const TABLES = [
 ];
 
 const STORAGE_PREFIX = "taskscreen.github.v12.";
-let activeGrade = localStorage.getItem(STORAGE_PREFIX + "activeGrade") || "first";
+const ACTIVE_GRADE_KEY = STORAGE_PREFIX + "activeGrade";
+function safeStorageObject(kind){ try { return window[kind] || null; } catch(e) { return null; } }
+function safeStoreGet(store,key){ try { return store?.getItem(key) ?? null; } catch(e) { return null; } }
+function safeStoreSet(store,key,value){ try { store?.setItem(key,value); return true; } catch(e) { return false; } }
+function safeStoreRemove(store,key){ try { store?.removeItem(key); return true; } catch(e) { return false; } }
+const safeLocalGet = key => safeStoreGet(safeStorageObject("localStorage"),key);
+const safeLocalSet = (key,value) => safeStoreSet(safeStorageObject("localStorage"),key,value);
+const safeSessionGet = key => safeStoreGet(safeStorageObject("sessionStorage"),key);
+const safeSessionSet = (key,value) => safeStoreSet(safeStorageObject("sessionStorage"),key,value);
+const safeSessionRemove = key => safeStoreRemove(safeStorageObject("sessionStorage"),key);
+let activeGrade = safeSessionGet(ACTIVE_GRADE_KEY) || "second";
 let state = null;
 let editMode = false;
 let activeTable = null;
@@ -99,7 +109,7 @@ function deepMerge(base, extra) {
 
 function loadState(grade) {
   let parsed = {};
-  try { parsed = JSON.parse(localStorage.getItem(STORAGE_PREFIX + grade) || "{}"); } catch(e) {}
+  try { parsed = JSON.parse(safeLocalGet(STORAGE_PREFIX + grade) || "{}"); } catch(e) {}
   const merged = deepMerge(defaultState(), parsed);
   if(!Array.isArray(merged.successCriteria)) merged.successCriteria = defaultState().successCriteria;
   if(!merged.countdown || typeof merged.countdown !== "object") merged.countdown = {endTime:""};
@@ -119,14 +129,12 @@ function loadState(grade) {
 
 let saveTimer = null;
 function saveState() {
-  localStorage.setItem(STORAGE_PREFIX + activeGrade, JSON.stringify(state));
+  safeLocalSet(STORAGE_PREFIX + activeGrade, JSON.stringify(state));
   const status = $("#saveStatus");
-  status.textContent = "SAVING";
-  status.classList.add("saving");
+  if(status){ status.textContent = "SAVING"; status.classList.add("saving"); }
   clearTimeout(saveTimer);
   saveTimer = setTimeout(() => {
-    status.textContent = "SAVED";
-    status.classList.remove("saving");
+    if(status){ status.textContent = "SAVED"; status.classList.remove("saving"); }
   }, 350);
 }
 
@@ -238,7 +246,8 @@ function syncEditableText() {
     const value = getPath(state, path) ?? "";
     if (el.textContent !== String(value)) el.textContent = value;
   });
-  $("#taskSub").dataset.placeholder = "Type what students need to do...";
+  const taskSub = $("#taskSub");
+  if(taskSub && taskSub.value !== String(state.taskSub || "")) taskSub.value = state.taskSub || "";
 }
 $$("[data-edit-key]").forEach(el => {
   el.addEventListener("input", () => {
@@ -269,24 +278,27 @@ function setEditMode(on) {
   });
 
   $("#objectiveInput").readOnly = !on;
+  const taskSub = $("#taskSub");
+  if(taskSub) taskSub.readOnly = !on;
   renderSectionIcons().catch(()=>{});
   renderAllLists().catch(()=>{});
   requestAnimationFrame(() => {
     fitObjectiveText();
-    if(!on) fitChecklistText();
+    fitChecklistText();
   });
 
   if(on && navigator.storage?.persist) {
     navigator.storage.persist().catch(()=>{});
   }
 }
-$("#editToggle").addEventListener("click", () => setEditMode(!editMode));
+$("#editToggle")?.addEventListener("click", () => setEditMode(!editMode));
 
 /* Grade profiles */
 async function switchGrade(grade) {
   if(!["first","second"].includes(grade)) return;
   activeGrade = grade;
-  localStorage.setItem(STORAGE_PREFIX + "activeGrade", grade);
+  safeSessionSet(ACTIVE_GRADE_KEY, grade);
+  safeLocalSet(ACTIVE_GRADE_KEY, grade);
   state = loadState(grade);
   $$(".grade-btn").forEach(b => b.classList.toggle("active", b.dataset.grade === grade));
   resetBathroom();
@@ -295,10 +307,16 @@ async function switchGrade(grade) {
 $$(".grade-btn").forEach(btn => btn.addEventListener("click", () => switchGrade(btn.dataset.grade)));
 
 /* Objective */
-$("#objectiveInput").addEventListener("input", e => {
+$("#objectiveInput")?.addEventListener("input", e => {
   state.objective = e.target.value;
   saveState();
   fitObjectiveText();
+});
+
+/* Task directions are a real textarea: Enter always makes a new line. */
+$("#taskSub")?.addEventListener("input", e => {
+  state.taskSub = e.target.value;
+  saveState();
 });
 
 /* Voice */
@@ -313,7 +331,7 @@ $$(".voice-btn").forEach(btn => btn.addEventListener("click", () => {
   renderVoice();
   saveState();
 }));
-$("#voiceLabel").addEventListener("input", () => {
+$("#voiceLabel")?.addEventListener("input", () => {
   if(!editMode) return;
   state.voiceLabels[state.voiceLevel] = $("#voiceLabel").textContent.trim();
   saveState();
@@ -362,7 +380,7 @@ function showCleanupPrompt() {
     </div>`;
   document.body.appendChild(overlay);
   $("#stayHereBtn").onclick = () => overlay.remove();
-  $("#goCleanupBtn").onclick = () => navigatePage("./cleanup.html?v=33");
+  $("#goCleanupBtn").onclick = () => navigatePage("./cleanup.html?v=38");
 }
 
 
@@ -405,7 +423,7 @@ function updateClassCountdown() {
   }
   previousCountdownRemaining = remaining;
 }
-endTimeInput.addEventListener("input", () => {
+endTimeInput?.addEventListener("input", () => {
   state.countdown.endTime = endTimeInput.value;
   saveState();
   updateClassCountdown();
@@ -450,12 +468,11 @@ function fitObjectiveText() {
   const base = parseFloat(getComputedStyle(el).fontSize) || 23;
   const max = Math.max(12, Math.min(42, base + Number(state.objectiveTextAdjust || 0)));
   el.style.setProperty("font-size", `${max}px`, "important");
-  if(!editMode) fitTextareaToBox(el, max, 12);
+  fitTextareaToBox(el, max, 12);
 }
 function fitChecklistText() {
-  if(editMode) return;
-  $$(".step-text").forEach(el => fitTextareaToBox(el, parseFloat(getComputedStyle(el).fontSize) || 18, 10));
-  $$(".reminder-text").forEach(el => fitTextareaToBox(el, parseFloat(getComputedStyle(el).fontSize) || 21, 10));
+  $$(".step-text").forEach(el => fitTextareaToBox(el, parseFloat(getComputedStyle(el).fontSize) || 18, 9));
+  $$(".reminder-text").forEach(el => fitTextareaToBox(el, parseFloat(getComputedStyle(el).fontSize) || 21, 9));
 }
 
 /* Success Criteria + Reminders */
@@ -654,10 +671,10 @@ async function renderAllLists() {
   applyPanelFont("reminders");
   requestAnimationFrame(() => {
     fitObjectiveText();
-    if(!editMode) fitChecklistText();
+    fitChecklistText();
   });
 }
-$("#addSuccessBtn").addEventListener("click", async e => {
+$("#addSuccessBtn")?.addEventListener("click", async e => {
   e.preventDefault();
   e.stopPropagation();
   if(!editMode) setEditMode(true);
@@ -669,7 +686,7 @@ $("#addSuccessBtn").addEventListener("click", async e => {
   requestAnimationFrame(() => focusNewestListRow("#successList",".step-text"));
   updateListVisibility();
 });
-$("#addReminderBtn").addEventListener("click", async e => {
+$("#addReminderBtn")?.addEventListener("click", async e => {
   e.preventDefault();
   e.stopPropagation();
   if(!editMode) setEditMode(true);
@@ -682,10 +699,12 @@ $("#addReminderBtn").addEventListener("click", async e => {
   updateListVisibility();
 });
 
-/* Early Finisher */
+/* Legacy blue Early Finisher strip was removed in v33.
+   Keep this null-safe so old saved data cannot stop the rest of the app. */
 function renderEarlyFinisher() {
   const wrap = $("#earlyFinisherWrap");
   const text = $("#earlyFinisherText");
+  if(!wrap || !text) return;
   text.textContent = state.earlyFinisher || "";
   wrap.classList.toggle("is-empty", !(state.earlyFinisher || "").trim());
 
@@ -693,19 +712,23 @@ function renderEarlyFinisher() {
   const base = parseFloat(getComputedStyle(text).fontSize) || 16;
   text.style.fontSize = Math.max(9, base + Number(state.earlyFinisherFontAdjust || 0)) + "px";
 }
-$("#earlyFinisherText").addEventListener("input", () => {
+const legacyEarlyText = $("#earlyFinisherText");
+const legacyEarlySmaller = $("#earlyFinisherSmaller");
+const legacyEarlyBigger = $("#earlyFinisherBigger");
+
+legacyEarlyText?.addEventListener("input", () => {
   if(!editMode) return;
-  state.earlyFinisher = $("#earlyFinisherText").textContent.trim();
+  state.earlyFinisher = legacyEarlyText.textContent.trim();
   saveState();
-  $("#earlyFinisherWrap").classList.toggle("is-empty", !state.earlyFinisher);
+  $("#earlyFinisherWrap")?.classList.toggle("is-empty", !state.earlyFinisher);
 });
-$("#earlyFinisherSmaller").addEventListener("click", e => {
+legacyEarlySmaller?.addEventListener("click", e => {
   e.stopPropagation();
   state.earlyFinisherFontAdjust = Math.max(-12, Number(state.earlyFinisherFontAdjust || 0) - 2);
   saveState();
   renderEarlyFinisher();
 });
-$("#earlyFinisherBigger").addEventListener("click", e => {
+legacyEarlyBigger?.addEventListener("click", e => {
   e.stopPropagation();
   state.earlyFinisherFontAdjust = Math.min(24, Number(state.earlyFinisherFontAdjust || 0) + 2);
   saveState();
@@ -745,6 +768,7 @@ async function clearTaskMedia() {
   await mediaDelete(activeGrade).catch(()=>{});
 }
 async function renderTask() {
+  if(!taskPreview || !taskTextInput || !imageUrlInput || !videoUrlInput || !taskLoopToggle) return;
   if(taskObjectUrl) { URL.revokeObjectURL(taskObjectUrl); taskObjectUrl = ""; }
   taskPreview.innerHTML = "";
   taskTextInput.value = state.task.text || "";
@@ -807,13 +831,13 @@ async function renderTask() {
                     state.task.mode.startsWith("video") || state.task.mode === "upload-video" ? "video" : "text");
   applyPanelFont("task");
 }
-taskTextInput.addEventListener("input", async () => {
+taskTextInput?.addEventListener("input", async () => {
   await clearTaskMedia();
   state.task = {mode:"text", text:taskTextInput.value, url:"", urlKind:"", loop:false};
   saveState();
   renderTask();
 });
-$("#imageFileInput").addEventListener("change", async e => {
+$("#imageFileInput")?.addEventListener("change", async e => {
   const file = e.target.files?.[0];
   if(!file) return;
   await mediaPut(activeGrade, {blob:file, kind:"image", name:file.name, mime:file.type});
@@ -821,7 +845,7 @@ $("#imageFileInput").addEventListener("change", async e => {
   saveState();
   renderTask();
 });
-$("#videoFileInput").addEventListener("change", async e => {
+$("#videoFileInput")?.addEventListener("change", async e => {
   const file = e.target.files?.[0];
   if(!file) return;
   await mediaPut(activeGrade, {blob:file, kind:"video", name:file.name, mime:file.type});
@@ -829,7 +853,7 @@ $("#videoFileInput").addEventListener("change", async e => {
   saveState();
   renderTask();
 });
-$("#useImageUrlBtn").addEventListener("click", async () => {
+$("#useImageUrlBtn")?.addEventListener("click", async () => {
   const url = imageUrlInput.value.trim();
   if(!url) return;
   await clearTaskMedia();
@@ -837,7 +861,7 @@ $("#useImageUrlBtn").addEventListener("click", async () => {
   saveState();
   renderTask();
 });
-$("#useVideoUrlBtn").addEventListener("click", async () => {
+$("#useVideoUrlBtn")?.addEventListener("click", async () => {
   const url = videoUrlInput.value.trim();
   if(!url) return;
   await clearTaskMedia();
@@ -845,7 +869,7 @@ $("#useVideoUrlBtn").addEventListener("click", async () => {
   saveState();
   renderTask();
 });
-$("#clearTaskBtn").addEventListener("click", async () => {
+$("#clearTaskBtn")?.addEventListener("click", async () => {
   await clearTaskMedia();
   state.task = {mode:"empty", text:"", url:"", urlKind:"", loop:false};
   saveState();
@@ -853,7 +877,7 @@ $("#clearTaskBtn").addEventListener("click", async () => {
 });
 
 
-taskLoopToggle.addEventListener("change", () => {
+taskLoopToggle?.addEventListener("change", () => {
   state.task.loop = !!taskLoopToggle.checked;
   saveState();
   if(state.task.mode === "upload-video" || state.task.mode === "video-url") {
@@ -945,14 +969,14 @@ $$("[data-table-label]").forEach(span => span.addEventListener("input", e => {
   state.bathroom.tableLabels[key] = span.textContent.trim().replace(/\s+TABLE$/i,"") || key.toUpperCase();
   saveState();
 }));
-$("#bathNextBtn").addEventListener("click", () => {
+$("#bathNextBtn")?.addEventListener("click", () => {
   if(editMode) return;
   if(!activeTable) { activateTable(TABLES[0].key,true); return; }
   let i = TABLES.findIndex(t => t.key === activeTable);
   i = (i+1) % TABLES.length;
   activateTable(TABLES[i].key,true);
 });
-$("#bathResetBtn").addEventListener("click", resetBathroom);
+$("#bathResetBtn")?.addEventListener("click", resetBathroom);
 
 /* Font controls */
 const FONT_MAP = {
@@ -987,6 +1011,10 @@ $$(".panel-tools button").forEach(btn => btn.addEventListener("click", e => {
   state.fontAdjust[panel][part] = Math.max(-18, Math.min(34, Number(state.fontAdjust[panel][part] || 0) + delta));
   saveState();
   applyPanelFont(panel);
+  requestAnimationFrame(() => {
+    if(panel === "learning" || panel === "reminders") fitChecklistText();
+    if(panel === "learning") fitObjectiveText();
+  });
 }));
 
 const objectiveTextSmaller = $("#objectiveTextSmaller");
@@ -1014,8 +1042,8 @@ function navigationWantsPresentation() {
   return isPageFullscreen() || document.body.classList.contains("presentation-mode");
 }
 function navigatePage(url) {
-  if(navigationWantsPresentation()) sessionStorage.setItem("stemPresentationMode","1");
-  else sessionStorage.removeItem("stemPresentationMode");
+  if(navigationWantsPresentation()) safeSessionSet("stemPresentationMode","1");
+  else safeSessionRemove("stemPresentationMode");
   window.location.href = url;
 }
 function isTypingTarget(el) {
@@ -1025,23 +1053,36 @@ document.addEventListener("keydown", e => {
   if(isTypingTarget(e.target)) return;
   if(e.key === "ArrowLeft") {
     e.preventDefault();
-    navigatePage("./grouper.html?v=33");
+    navigatePage("./grouper.html?v=38");
   } else if(e.key === "ArrowRight") {
     e.preventDefault();
-    navigatePage("./cleanup.html?v=33");
+    navigatePage("./cleanup.html?v=38");
   }
 });
 document.querySelector(".grouper-nav")?.addEventListener("click", e => {
   e.preventDefault();
-  navigatePage("./grouper.html?v=33");
+  navigatePage("./grouper.html?v=38");
 });
 document.querySelector(".page-arrow-right")?.addEventListener("click", e => {
   e.preventDefault();
-  navigatePage("./cleanup.html?v=33");
+  navigatePage("./cleanup.html?v=38");
 });
-if(sessionStorage.getItem("stemPresentationMode") === "1") {
+if(safeSessionGet("stemPresentationMode") === "1") {
   document.body.classList.add("presentation-mode");
 }
+/* Always use the full viewport. Browsers require a user gesture to hide browser chrome,
+   so the first pointer/key interaction also requests native fullscreen when allowed. */
+document.body.classList.add("presentation-mode");
+safeSessionSet("stemPresentationMode","1");
+let nativeFullscreenRequested = false;
+async function requestNativeFullscreenOnce(){
+  if(nativeFullscreenRequested || isPageFullscreen()) return;
+  nativeFullscreenRequested = true;
+  await enterPageFullscreen();
+  syncFullscreenButton();
+}
+document.addEventListener("pointerdown", requestNativeFullscreenOnce, {once:true,capture:true});
+document.addEventListener("keydown", requestNativeFullscreenOnce, {once:true,capture:true});
 
 const cleanupPromptStyle = document.createElement("style");
 cleanupPromptStyle.textContent = `
@@ -1059,7 +1100,7 @@ document.head.appendChild(cleanupPromptStyle);
 window.addEventListener("storage", e => {
   if(!e.key) return;
   if(e.key === STORAGE_PREFIX + activeGrade || e.key === ACTIVE_GRADE_KEY) {
-    const nextGrade = localStorage.getItem(ACTIVE_GRADE_KEY) || activeGrade;
+    const nextGrade = safeLocalGet(ACTIVE_GRADE_KEY) || activeGrade;
     if(nextGrade === activeGrade) {
       state = loadState(activeGrade);
       renderAll().catch(()=>{});
@@ -1110,10 +1151,10 @@ if(fullscreenToggle){
     }
     syncFullscreenButton();
     if(isPageFullscreen() || document.body.classList.contains("presentation-mode")) {
-      sessionStorage.setItem("stemPresentationMode","1");
+      safeSessionSet("stemPresentationMode","1");
       fullscreenToggle.textContent = "EXIT FULL SCREEN";
     } else {
-      sessionStorage.removeItem("stemPresentationMode");
+      safeSessionRemove("stemPresentationMode");
     }
   });
   ["fullscreenchange","webkitfullscreenchange","MSFullscreenChange"].forEach(evt=>document.addEventListener(evt,syncFullscreenButton));
@@ -1124,6 +1165,8 @@ async function renderAll() {
   syncEditableText();
   renderEarlyFinisher();
   $("#objectiveInput").value = state.objective || "";
+  const taskSub = $("#taskSub");
+  if(taskSub) taskSub.value = state.taskSub || "";
   endTimeInput.value = state.countdown?.endTime || "";
   updatePeriodButtons();
   startClassCountdownClock();
@@ -1144,7 +1187,7 @@ window.addEventListener("resize", () => {
   resizeTimer = setTimeout(() => {
     applyAllFonts();
     fitObjectiveText();
-    if(!editMode) fitChecklistText();
+    fitChecklistText();
   },120);
 });
 

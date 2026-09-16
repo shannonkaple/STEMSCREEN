@@ -1510,3 +1510,343 @@ body.edit-mode .reminder-row.has-image .list-marker{
     font-size:clamp(52px,6vw,90px) !important;
   }
 }
+
+
+/* ============================================================
+   v37 — stable projector layout / equal learning halves
+   ============================================================ */
+:root{--uniform-title-size:clamp(25px,2.15vw,40px)}
+
+/* Every major title begins at the same size. Per-panel A-/A+ can still override. */
+.panel-title,
+.learning-title,
+.task-title,
+.countdown-title,
+.voice .panel-title,
+.reminders .panel-title,
+.bathroom-title{
+  font-size:var(--uniform-title-size)!important;
+  line-height:1!important;
+}
+
+/* OBJECTIVE and SUCCESS CRITERIA are true equal halves. */
+.learning-grid{
+  grid-template-columns:minmax(0,1fr) 5px minmax(0,1fr)!important;
+  gap:7px!important;
+}
+.objective-section,.success-section{min-width:0!important;min-height:0!important;overflow:hidden!important}
+.objective-content{
+  flex:1!important;
+  min-height:0!important;
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) minmax(0,1.08fr)!important;
+  grid-template-rows:minmax(0,1fr)!important;
+  gap:8px!important;
+  padding:2px 3px 4px!important;
+  align-items:stretch!important;
+}
+.objective-content .section-icon-slot{
+  grid-column:1!important;
+  grid-row:1!important;
+  width:100%!important;
+  height:100%!important;
+  max-width:none!important;
+  max-height:none!important;
+  min-width:0!important;
+  min-height:0!important;
+  border:3px solid rgba(0,0,0,.32)!important;
+  border-radius:16px!important;
+  background:#fff!important;
+  overflow:hidden!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+}
+.objective-content .section-icon-slot img{
+  width:100%!important;
+  height:100%!important;
+  object-fit:contain!important;
+  padding:4px!important;
+}
+.objective-content .section-icon-placeholder{
+  font-size:clamp(12px,1vw,17px)!important;
+}
+.objective-input{
+  grid-column:2!important;
+  grid-row:1!important;
+  width:100%!important;
+  height:100%!important;
+  min-width:0!important;
+  min-height:0!important;
+  max-height:none!important;
+  overflow:hidden!important;
+  resize:none!important;
+  border:3px solid rgba(0,0,0,.32)!important;
+  border-radius:16px!important;
+  background:#fff!important;
+  padding:12px!important;
+  text-align:center!important;
+  line-height:1.04!important;
+}
+.objective-text-tools{right:6px!important;bottom:7px!important}
+
+/* Success markers stay centered against the actual text block. */
+.success-list .step-row{
+  align-items:stretch!important;
+  grid-template-columns:30px minmax(0,1fr) 25px!important;
+}
+.success-list .list-marker{
+  align-self:center!important;
+  justify-self:center!important;
+  display:grid!important;
+  place-items:center!important;
+  width:100%!important;
+  height:auto!important;
+  line-height:1!important;
+  margin:0!important;
+}
+.success-list .step-text{
+  align-self:stretch!important;
+  min-width:0!important;
+  min-height:0!important;
+  width:100%!important;
+  height:100%!important;
+  overflow:hidden!important;
+  resize:none!important;
+  text-align:left!important;
+  white-space:pre-wrap!important;
+}
+
+/* BLUE TASK: plain white directions box in Edit; Enter is a real new line. */
+.task-content-grid{
+  min-height:0!important;
+  grid-template-columns:minmax(170px,25%) minmax(0,1fr)!important;
+  gap:9px!important;
+}
+.task-sub{
+  box-sizing:border-box!important;
+  width:100%!important;
+  height:100%!important;
+  min-width:0!important;
+  min-height:0!important;
+  max-height:none!important;
+  resize:none!important;
+  overflow:hidden!important;
+  white-space:pre-wrap!important;
+  overflow-wrap:break-word!important;
+  word-break:normal!important;
+  text-align:left!important;
+  direction:ltr!important;
+  line-height:1.12!important;
+  border:3px solid rgba(0,0,0,.3)!important;
+  border-radius:16px!important;
+  padding:12px!important;
+  background:rgba(255,255,255,.82)!important;
+  color:#20202a!important;
+}
+body.edit-mode .task-sub{
+  background:#fff!important;
+  border-color:#000!important;
+  outline:none!important;
+}
+body:not(.edit-mode) .task-sub{
+  pointer-events:none!important;
+}
+.task-stage{
+  min-width:0!important;
+  min-height:0!important;
+  overflow:hidden!important;
+  background:#fff!important;
+}
+body.edit-mode .task-stage{
+  display:grid!important;
+  grid-template-rows:auto minmax(0,1fr)!important;
+}
+body.edit-mode .task-editor{
+  position:static!important;
+  width:100%!important;
+  max-width:none!important;
+  border-radius:0!important;
+  border:0!important;
+  border-bottom:2px solid #d8d8d8!important;
+  background:#fff!important;
+  box-shadow:none!important;
+  padding:6px!important;
+}
+body.edit-mode .task-preview{min-height:0!important;overflow:hidden!important}
+.task-preview img,.task-preview video,.task-preview iframe{
+  width:100%!important;
+  height:100%!important;
+  max-width:100%!important;
+  max-height:100%!important;
+  object-fit:contain!important;
+}
+
+/* EARLY FINISHERS: image slot is large on the LEFT, text gets the rest. */
+.reminders{overflow:hidden!important}
+.reminder-list{min-height:0!important;overflow:hidden!important}
+.reminder-row,
+body.edit-mode .reminder-row,
+body.edit-mode .reminder-row.no-image{
+  grid-template-columns:28px minmax(64px,30%) minmax(0,1fr) 24px!important;
+  gap:6px!important;
+  min-width:0!important;
+  min-height:0!important;
+  overflow:hidden!important;
+  align-items:center!important;
+}
+.reminder-row.has-image,
+body.edit-mode .reminder-row.has-image{
+  grid-template-columns:minmax(64px,30%) minmax(0,1fr) 24px!important;
+}
+.reminder-pic-wrap{
+  width:100%!important;
+  height:100%!important;
+  min-width:0!important;
+  min-height:48px!important;
+  max-height:84px!important;
+  overflow:hidden!important;
+  border-radius:12px!important;
+  background:#fff!important;
+}
+.reminder-pic{
+  width:100%!important;
+  height:100%!important;
+  max-width:100%!important;
+  max-height:100%!important;
+  object-fit:contain!important;
+}
+.reminder-text{
+  min-width:0!important;
+  min-height:0!important;
+  width:100%!important;
+  height:100%!important;
+  max-height:none!important;
+  resize:none!important;
+  overflow:hidden!important;
+  white-space:pre-wrap!important;
+  overflow-wrap:break-word!important;
+  text-align:left!important;
+  line-height:1.05!important;
+}
+.reminder-list .list-marker{
+  align-self:center!important;
+  justify-self:center!important;
+  display:grid!important;
+  place-items:center!important;
+  width:100%!important;
+  height:auto!important;
+}
+/* no picture in view: marker + text uses all available width */
+body:not(.edit-mode) .reminder-row.no-image{
+  grid-template-columns:28px minmax(0,1fr)!important;
+}
+body:not(.edit-mode) .reminder-row.no-image .reminder-pic-wrap,
+body:not(.edit-mode) .reminder-row.no-image .reminder-remove{display:none!important}
+
+/* Keep every panel's contents clipped inside its colored boundary. */
+.panel{overflow:hidden!important}
+.learning,.task,.reminders,.bathroom,.countdown-panel,.voice{min-width:0!important;min-height:0!important}
+
+/* Automatic full-viewport presentation layout. */
+html,body{width:100%;height:100%;overflow:hidden!important}
+body.presentation-mode{position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important}
+body.presentation-mode .board{position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important}
+
+/* v37 button-bar fit: keep every edit control fully inside its colored panel. */
+body.edit-mode .panel-tools{
+  right:4px!important;
+  top:4px!important;
+  max-width:calc(100% - 8px)!important;
+  gap:1px!important;
+  padding:1px 3px!important;
+  white-space:nowrap!important;
+  overflow:visible!important;
+}
+body.edit-mode .panel-tools span{font-size:6px!important}
+body.edit-mode .panel-tools button{
+  width:22px!important;
+  height:20px!important;
+  min-width:22px!important;
+  font-size:8px!important;
+}
+body.edit-mode .voice .panel-tools,
+body.edit-mode .reminders .panel-tools,
+body.edit-mode .bathroom .panel-tools{
+  transform:scale(.88)!important;
+  transform-origin:top right!important;
+}
+body.edit-mode .page-arrow{display:none!important}
+
+
+/* ============================================================
+   v38 — exact Bathrooms/Water icon beside flashing table name
+   ============================================================ */
+.bathroom-current-zone{
+  padding:4px 4% 8px !important;
+  min-height:0 !important;
+}
+
+.bathroom-current-layout{
+  width:100%;
+  height:100%;
+  min-height:0;
+  display:grid;
+  grid-template-columns:minmax(115px,28%) minmax(0,1fr);
+  gap:12px;
+  align-items:center;
+}
+
+.bathroom-current-icon-wrap{
+  min-width:0;
+  height:100%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+}
+
+.bathroom-current-icon{
+  display:block;
+  width:100%;
+  max-width:185px;
+  height:100%;
+  max-height:150px;
+  object-fit:contain;
+  object-position:center;
+}
+
+.bathroom-current{
+  width:100% !important;
+  max-width:none !important;
+  min-width:0 !important;
+  min-height:122px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  text-align:center !important;
+  font-size:clamp(68px,6.5vw,118px) !important;
+  line-height:.82 !important;
+  padding:4px 10px !important;
+  overflow:hidden !important;
+}
+
+/* Keep the called table large, but shift the visual weight to the right. */
+.bathroom-current:not(.is-empty){
+  margin-left:0 !important;
+}
+
+@media(max-width:1000px){
+  .bathroom-current-layout{
+    grid-template-columns:minmax(90px,26%) minmax(0,1fr);
+    gap:8px;
+  }
+  .bathroom-current-icon{
+    max-width:135px;
+    max-height:110px;
+  }
+  .bathroom-current{
+    min-height:90px !important;
+    font-size:clamp(50px,5.8vw,82px) !important;
+  }
+}

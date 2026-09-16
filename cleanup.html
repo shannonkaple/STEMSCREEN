@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Clean Up</title>
-<link rel="icon" type="image/png" href="./star.png?v=35">
+<link rel="icon" type="image/png" href="./star.png?v=38">
 <style>
 @font-face{font-family:"KAHomebodyClub";src:url("./KAHomebodyClub.ttf") format("truetype");font-display:swap}
 @font-face{font-family:"VAGTaskscreen";src:url("./VAG-Rounded-Std-Black_47296.ttf") format("truetype");font-display:swap}
@@ -195,17 +195,59 @@ body.presentation-mode{
   .steps-card{padding:2px 22px 8px}
   .steps-card img{max-width:90%;max-height:90%}
 }
+
+/* v37: MUCH larger flashing title + larger video, with hard non-overlap grid */
+.cleanup-shell{
+  grid-template-rows:minmax(220px,43%) minmax(0,57%)!important;
+  gap:12px!important;
+}
+.top-row{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) minmax(430px,42vw)!important;
+  gap:20px!important;
+  min-height:0!important;
+  overflow:hidden!important;
+}
+.cleanup-title-wrap{min-width:0!important;min-height:0!important;overflow:hidden!important;padding:0!important}
+.cleanup-title{
+  height:100%!important;
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:center!important;
+  font-size:clamp(150px,15vw,300px)!important;
+  line-height:.62!important;
+  white-space:normal!important;
+  overflow:hidden!important;
+}
+.cleanup-title span{display:block!important}
+.video-wrap{min-width:0!important;min-height:0!important;overflow:hidden!important;align-items:center!important}
+.video-wrap video{
+  width:100%!important;
+  height:100%!important;
+  max-width:100%!important;
+  max-height:100%!important;
+  object-fit:contain!important;
+}
+.steps-card{min-height:0!important;overflow:hidden!important;padding:2px 28px 8px!important}
+.steps-card img{max-width:90%!important;max-height:96%!important;object-fit:contain!important}
+body.presentation-mode{position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important}
+@media(max-width:1000px){
+ .top-row{grid-template-columns:minmax(0,1fr) minmax(320px,40vw)!important;gap:12px!important}
+ .cleanup-title{font-size:clamp(105px,13vw,210px)!important}
+}
+
 </style>
 </head>
 
 <body>
-<a class="back-arrow" href="./index.html?v=35" aria-label="Back to Task Screen">←</a>
+<a class="back-arrow" href="./index.html?v=38" aria-label="Back to Task Screen">←</a>
 <button class="fullscreen-btn" id="cleanupFullscreen" type="button">FULL SCREEN</button>
 
 <main class="cleanup-shell">
   <div class="top-row">
     <div class="cleanup-title-wrap">
-      <div class="cleanup-title">CLEAN UP</div>
+      <div class="cleanup-title"><span>CLEAN</span><span>UP</span></div>
     </div>
 
     <div class="video-wrap">
@@ -273,27 +315,44 @@ body.presentation-mode{
 
   const go = url => {
     if(isFs() || document.body.classList.contains("presentation-mode")){
-      sessionStorage.setItem("stemPresentationMode","1");
+      try{sessionStorage.setItem("stemPresentationMode","1")}catch(e){};
     }
     window.location.href = url;
   };
 
   document.querySelector(".back-arrow")?.addEventListener("click", e => {
     e.preventDefault();
-    go("./index.html?v=35");
+    go("./index.html?v=38");
   });
 
   document.addEventListener("keydown", e => {
     if(isTypingTarget(e.target)) return;
     if(e.key === "ArrowLeft"){
       e.preventDefault();
-      go("./index.html?v=35");
+      go("./index.html?v=38");
     }
   });
 
-  if(sessionStorage.getItem("stemPresentationMode") === "1"){
+  if((()=>{try{return sessionStorage.getItem("stemPresentationMode")==="1"}catch(e){return false}})()){
     document.body.classList.add("presentation-mode");
   }
+})();
+</script>
+
+<script>
+(()=>{
+  document.body.classList.add("presentation-mode");
+  try{try{sessionStorage.setItem("stemPresentationMode","1")}catch(e){}}catch(e){}
+  let asked=false;
+  const ask=async()=>{
+    if(asked||document.fullscreenElement||document.webkitFullscreenElement)return;
+    asked=true;
+    const el=document.documentElement;
+    const req=el.requestFullscreen||el.webkitRequestFullscreen||el.msRequestFullscreen;
+    try{const r=req&&req.call(el);if(r&&r.then)await r}catch(e){}
+  };
+  document.addEventListener("pointerdown",ask,{once:true,capture:true});
+  document.addEventListener("keydown",ask,{once:true,capture:true});
 })();
 </script>
 </body>
