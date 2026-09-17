@@ -45,6 +45,7 @@ function defaultState() {
       bathroom:"BATHROOM + WATER"
     },
     objective:"",
+    objectiveHtml:"",
     objectiveTextAdjust:0,
     taskSub:"",
     taskSteps:[],
@@ -105,12 +106,82 @@ function deepMerge(base, extra) {
 }
 
 
+
+function htmlToText(html) {
+  const div = document.createElement("div");
+  div.innerHTML = String(html || "");
+  return (div.innerText || div.textContent || "").replace(/\u00a0/g," ").trim();
+}
+function richHtmlFromItem(item) {
+  const html = String(item?.html || "");
+  return html ? html : escapeHtml(String(item?.text || "")).replace(/\n/g,"<br>");
+}
+function normalizeRichItem(item) {
+  const copy = {...item};
+  if(!copy.html && copy.text) copy.html = escapeHtml(String(copy.text)).replace(/\n/g,"<br>");
+  if(copy.html) copy.text = htmlToText(copy.html);
+  return copy;
+}
+function setRichEditorHtml(el, html, text="") {
+  if(!el) return;
+  const next = html || (text ? escapeHtml(String(text)).replace(/\n/g,"<br>") : "");
+  if(el.innerHTML !== next) el.innerHTML = next;
+}
+function bindPlainPaste(el) {
+  if(!el || el.dataset.plainPasteBound) return;
+  el.dataset.plainPasteBound = "1";
+  el.addEventListener("paste", e => {
+    if(!editMode) return;
+    e.preventDefault();
+    const text = e.clipboardData?.getData("text/plain") || "";
+    document.execCommand("insertText", false, text);
+  });
+}
+
+let activeRichEditor = null;
+let savedRichRange = null;
+function rememberRichSelection() {
+  if(!editMode) return;
+  const sel = window.getSelection();
+  if(!sel || !sel.rangeCount) return;
+  const node = sel.anchorNode;
+  const el = node?.nodeType === 1 ? node : node?.parentElement;
+  const editor = el?.closest?.(".rich-editor");
+  if(!editor) return;
+  activeRichEditor = editor;
+  savedRichRange = sel.getRangeAt(0).cloneRange();
+}
+document.addEventListener("selectionchange", rememberRichSelection);
+
+function restoreRichSelection() {
+  if(!activeRichEditor || !savedRichRange) return false;
+  activeRichEditor.focus();
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(savedRichRange);
+  return true;
+}
+function applyRichCommand(command, value=null) {
+  if(!restoreRichSelection()) return;
+  try { document.execCommand("styleWithCSS", false, true); } catch(e) {}
+  document.execCommand(command, false, value);
+  activeRichEditor.dispatchEvent(new Event("input",{bubbles:true}));
+  rememberRichSelection();
+}
+$$(".rich-color").forEach(btn => {
+  btn.addEventListener("mousedown", e => e.preventDefault());
+  btn.addEventListener("click", () => applyRichCommand("foreColor", btn.dataset.richColor));
+});
+$("#richUnderlineBtn")?.addEventListener("mousedown", e => e.preventDefault());
+$("#richUnderlineBtn")?.addEventListener("click", () => applyRichCommand("underline"));
+
 function cleanSavedList(items, prefix) {
   const arr = Array.isArray(items) ? items : [];
   const out = [];
   for(const raw of arr) {
     const item = (raw && typeof raw === "object") ? {...raw} : {text:String(raw || "")};
     item.text = String(item.text || "");
+    item = normalizeRichItem(item);
     if(!item.text.trim()) continue;
     if(!item.id) item.id = `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2,7)}`;
     out.push(item);
@@ -153,10 +224,23 @@ function loadState(grade) {
     merged.task = {mode:"empty", text:"", url:"", urlKind:"", loop:false};
   }
   merged.taskSteps = cleanSavedList(merged.taskSteps, "t");
+  if(typeof merged.objectiveHtml !== "string") merged.objectiveHtml = "";
+  if(!merged.objectiveHtml && String(merged.objective || "").trim()) merged.objectiveHtml = escapeHtml(String(merged.objective)).replace(/\n/g,"<br>");
+  if(merged.objectiveHtml) merged.objective = htmlToText(merged.objectiveHtml);
   if(typeof merged.objectiveTextAdjust !== "number") merged.objectiveTextAdjust = 0;
   if(typeof merged.earlyFinisher !== "string") merged.earlyFinisher = "";
   if(typeof merged.earlyFinisherFontAdjust !== "number") merged.earlyFinisherFontAdjust = 0;
   merged.reminders = cleanSavedList(merged.reminders, "r");
+  if(merged.reminders.length > 3) {
+    const keep = merged.reminders.slice(0,2);
+    const rest = merged.reminders.slice(2);
+    keep.push({
+      id:rest[0]?.id || "r3",
+      text:rest.map(x=>x.text).filter(Boolean).join("\n"),
+      html:rest.map(x=>richHtmlFromItem(x)).filter(Boolean).join("<br>")
+    });
+    merged.reminders = keep;
+  }
   if(!merged.fontAdjust.learning) merged.fontAdjust.learning = {title:0,text:0};
   if(!merged.fontAdjust.countdown) merged.fontAdjust.countdown = {title:0,text:0};
   return merged;
@@ -318,12 +402,20 @@ function setEditMode(on) {
     span.spellcheck = false;
   });
 
-  $("#objectiveInput").readOnly = !on;
+  const objectiveEditor = $("#objectiveInput");
+  if(objectiveEditor) {
+    objectiveEditor.contentEditable = on ? "true" : "false";
+    objectiveEditor.spellcheck = false;
+  }
 
   if(on) {
     ensureOneEditorRow("successCriteria","s");
-    ensureOneEditorRow("reminders","r");
     ensureOneEditorRow("taskSteps","t");
+    if(!Array.isArray(state.reminders)) state.reminders = [];
+    while(state.reminders.length < 3) {
+      state.reminders.push({id:`r_${Date.now()}_${state.reminders.length}_editor`,text:"",html:""});
+    }
+    if(state.reminders.length > 3) state.reminders = state.reminders.slice(0,3);
   }
 
   renderSectionIcons().catch(()=>{});
@@ -356,10 +448,12 @@ $$(".grade-btn").forEach(btn => btn.addEventListener("click", () => switchGrade(
 
 /* Objective */
 $("#objectiveInput")?.addEventListener("input", e => {
-  state.objective = e.target.value;
+  state.objectiveHtml = e.currentTarget.innerHTML;
+  state.objective = (e.currentTarget.innerText || "").trim();
   saveState();
   fitObjectiveText();
 });
+bindPlainPaste($("#objectiveInput"));
 
 
 /* Voice */
@@ -495,9 +589,36 @@ function fitObjectiveText() {
   el.style.setProperty("font-size", `${max}px`, "important");
   fitTextareaToBox(el, max, 12);
 }
+function fitUniformTextGroup(selector, fallbackMax, minPx=9) {
+  const els = $$(selector).filter(el => {
+    const r = el.getBoundingClientRect();
+    return r.width > 0 && r.height > 0;
+  });
+  if(!els.length) return;
+
+  els.forEach(el => el.style.removeProperty("font-size"));
+  const computed = els.map(el => parseFloat(getComputedStyle(el).fontSize) || fallbackMax);
+  let size = Math.min(fallbackMax, ...computed);
+
+  const apply = px => els.forEach(el =>
+    el.style.setProperty("font-size", `${px}px`, "important")
+  );
+
+  apply(size);
+  const anyOverflow = () => els.some(el =>
+    el.scrollHeight > el.clientHeight + 1 || el.scrollWidth > el.clientWidth + 1
+  );
+
+  while(size > minPx && anyOverflow()) {
+    size -= 1;
+    apply(size);
+  }
+}
+
 function fitChecklistText() {
-  $$(".step-text").forEach(el => fitTextareaToBox(el, parseFloat(getComputedStyle(el).fontSize) || 18, 9));
-  $$(".reminder-text").forEach(el => fitTextareaToBox(el, parseFloat(getComputedStyle(el).fontSize) || 21, 9));
+  fitUniformTextGroup(".step-text", 22, 10);
+  fitUniformTextGroup(".reminder-text", 22, 10);
+  fitUniformTextGroup(".task-step-text", 22, 10);
 }
 
 /* Success Criteria + Reminders */
@@ -605,7 +726,7 @@ async function renderChecklist({
     row.innerHTML = `
       <div class="list-marker" aria-hidden="true">${markerChar(markerTarget)}</div>
       ${pictureHtml}
-      <textarea class="${textClass}" rows="2" placeholder="${placeholder}" ${editMode ? "" : "readonly"}>${escapeHtml(item.text || "")}</textarea>
+      <div class="${textClass} rich-editor" data-placeholder="${placeholder}" contenteditable="${editMode ? "true" : "false"}">${richHtmlFromItem(item)}</div>
       <button class="${removeClass}" type="button" aria-label="Delete this item">×</button>`;
 
     const input = row.querySelector(`.${textClass}`);
@@ -642,9 +763,11 @@ async function renderChecklist({
       });
     }
 
+    bindPlainPaste(input);
     input.addEventListener("input", () => {
-      state[listName][i].text = input.value;
-      row.classList.toggle("is-blank", !input.value.trim());
+      state[listName][i].html = input.innerHTML;
+      state[listName][i].text = (input.innerText || "").trim();
+      row.classList.toggle("is-blank", !state[listName][i].text);
       saveState();
       updateListVisibility();
       if(!editMode) fitTextareaToBox(input, parseFloat(getComputedStyle(input).fontSize) || 18, 10);
@@ -676,9 +799,11 @@ function focusNewestListRow(containerSelector, textSelector) {
   row.scrollIntoView({block:"nearest",behavior:"smooth"});
   const input = row.querySelector(textSelector);
   if(input) {
-    input.removeAttribute("readonly");
+    input.contentEditable = "true";
     input.focus();
-    input.setSelectionRange(input.value.length,input.value.length);
+    const range=document.createRange();
+    range.selectNodeContents(input);range.collapse(false);
+    const sel=window.getSelection();sel.removeAllRanges();sel.addRange(range);
   }
   setTimeout(()=>row.classList.remove("is-new-row"),1400);
 }
@@ -776,6 +901,58 @@ async function renderEarlyMedia() {
   }
 }
 
+
+function renderEarlyThree() {
+  const container = $("#reminderList");
+  if(!container) return;
+
+  if(editMode) {
+    if(!Array.isArray(state.reminders)) state.reminders = [];
+    while(state.reminders.length < 3) {
+      state.reminders.push({id:`r_${Date.now()}_${state.reminders.length}_editor`,text:"",html:""});
+    }
+    if(state.reminders.length > 3) state.reminders = state.reminders.slice(0,3);
+  }
+
+  const source = Array.isArray(state.reminders) ? state.reminders : [];
+  const visible = editMode ? source.slice(0,3) : source.filter(x=>String(x.text||"").trim()).slice(0,3);
+  container.innerHTML = "";
+  container.dataset.count = String(Math.max(1, visible.length || 1));
+
+  visible.forEach(item => {
+    const actualIndex = source.indexOf(item);
+    const row = document.createElement("div");
+    row.className = "reminder-row early-three-row";
+    row.innerHTML = `
+      <div class="reminder-text rich-editor" data-placeholder="Type an early finisher..."
+        contenteditable="${editMode ? "true" : "false"}">${richHtmlFromItem(item)}</div>
+      <button class="reminder-remove" type="button" aria-label="Clear this Early Finisher">×</button>`;
+
+    const input = row.querySelector(".reminder-text");
+    const remove = row.querySelector(".reminder-remove");
+    bindPlainPaste(input);
+
+    input.addEventListener("input", () => {
+      if(actualIndex < 0) return;
+      state.reminders[actualIndex].html = input.innerHTML;
+      state.reminders[actualIndex].text = (input.innerText || "").trim();
+      saveState();
+      requestAnimationFrame(()=>fitChecklistText());
+    });
+
+    remove.addEventListener("click", () => {
+      if(actualIndex < 0) return;
+      state.reminders[actualIndex].text = "";
+      state.reminders[actualIndex].html = "";
+      saveState();
+      renderEarlyThree();
+      requestAnimationFrame(()=>fitChecklistText());
+    });
+
+    container.appendChild(row);
+  });
+}
+
 async function renderAllLists() {
   updateMarkerButtons();
   await renderChecklist({
@@ -784,12 +961,7 @@ async function renderAllLists() {
     textClass:"step-text",removeClass:"step-remove",
     placeholder:"Type a success criterion...",markerTarget:"success",showPictures:false
   });
-  await renderChecklist({
-    listName:"reminders",containerId:"#reminderList",mediaKind:"reminder",
-    rowClass:"reminder-row",picClass:"reminder-pic",
-    textClass:"reminder-text",removeClass:"reminder-remove",
-    placeholder:"Type an early finisher...",markerTarget:"reminders",showPictures:false
-  });
+  renderEarlyThree();
   await renderEarlyMedia();
   updateListVisibility();
   applyPanelFont("learning");
@@ -811,18 +983,6 @@ $("#addSuccessBtn")?.addEventListener("click", async e => {
   }
   requestAnimationFrame(() => focusNewestListRow("#successList",".step-text"));
 });
-$("#addReminderBtn")?.addEventListener("click", async e => {
-  e.preventDefault();
-  e.stopPropagation();
-  if(!editMode) setEditMode(true);
-  if(!Array.isArray(state.reminders)) state.reminders = [];
-  const blank = state.reminders.findIndex(r => !String(r?.text || "").trim());
-  if(blank < 0) {
-    state.reminders.push({id:`r_${Date.now()}_${Math.random().toString(36).slice(2,7)}`,text:""});
-    await renderAllLists();
-  }
-  requestAnimationFrame(() => focusNewestListRow("#reminderList",".reminder-text"));
-});
 
 
 function renderTaskSteps() {
@@ -841,18 +1001,20 @@ function renderTaskSteps() {
     const row = document.createElement("div");
     row.className = `task-step-row${blank ? " is-blank" : ""}`;
     row.innerHTML = `
-      <textarea class="task-step-text" rows="2"
-        placeholder="Type a task step..."
-        ${editMode ? "" : "readonly"}>${escapeHtml(item.text || "")}</textarea>
+      <div class="task-step-text rich-editor" data-placeholder="Type a task step..."
+        contenteditable="${editMode ? "true" : "false"}">${richHtmlFromItem(item)}</div>
       <button class="task-step-remove" type="button" aria-label="Delete this task step">×</button>`;
 
     const input = row.querySelector(".task-step-text");
     const remove = row.querySelector(".task-step-remove");
 
+    bindPlainPaste(input);
     input.addEventListener("input", () => {
-      state.taskSteps[i].text = input.value;
-      row.classList.toggle("is-blank", !input.value.trim());
+      state.taskSteps[i].html = input.innerHTML;
+      state.taskSteps[i].text = (input.innerText || "").trim();
+      row.classList.toggle("is-blank", !state.taskSteps[i].text);
       saveState();
+      requestAnimationFrame(()=>fitChecklistText());
     });
 
     remove.addEventListener("click", () => {
@@ -883,7 +1045,11 @@ $("#addTaskStepBtn")?.addEventListener("click", e => {
     const row = rows[rows.length - 1];
     const input = row?.querySelector(".task-step-text");
     input?.focus();
-    if(input) input.setSelectionRange(input.value.length,input.value.length);
+    if(input) {
+      const range=document.createRange();
+      range.selectNodeContents(input);range.collapse(false);
+      const sel=window.getSelection();sel.removeAllRanges();sel.addRange(range);
+    }
   });
 });
 
@@ -1428,7 +1594,8 @@ if(fullscreenToggle){
 async function renderAll() {
   syncEditableText();
   renderEarlyFinisher();
-  $("#objectiveInput").value = state.objective || "";
+  setRichEditorHtml($("#objectiveInput"), state.objectiveHtml, state.objective);
+  bindPlainPaste($("#objectiveInput"));
   endTimeInput.value = state.countdown?.endTime || "";
   updatePeriodButtons();
   startClassCountdownClock();

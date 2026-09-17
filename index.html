@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>STEM Task Screen</title>
-<link rel="icon" type="image/png" href="./star.png?v=44">
-<link rel="stylesheet" href="./styles.css?v=44">
+<link rel="icon" type="image/png" href="./star.png?v=46">
+<link rel="stylesheet" href="./styles.css?v=46">
 </head>
 <body>
 <div class="board" id="board">
@@ -18,16 +18,22 @@
 
     <div class="learning-grid" id="learningGrid">
       <div class="learning-section objective-section">
-        <div class="learning-title">
-          <span data-edit-key="titles.objective">OBJECTIVE</span>
-        </div>
         <div class="objective-content">
           <div class="section-icon-slot" data-section-icon="objective"></div>
-          <textarea id="objectiveInput" class="objective-input" placeholder="Type today's objective..."></textarea>
-          <div class="objective-text-tools edit-only">
-            <span>OBJECTIVE TEXT</span>
-            <button id="objectiveTextSmaller" type="button">A−</button>
-            <button id="objectiveTextBigger" type="button">A+</button>
+          <div class="objective-text-column">
+            <div class="learning-title objective-title">
+              <svg class="title-icon objective-check-icon" viewBox="0 0 64 64" aria-hidden="true">
+                <circle cx="32" cy="32" r="25" fill="#fff" stroke="#000" stroke-width="3"/>
+                <path d="M18 33l9 9 19-22" fill="none" stroke="#56A328" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <span data-edit-key="titles.objective">OBJECTIVE</span>
+            </div>
+            <div id="objectiveInput" class="objective-input rich-editor" data-placeholder="Type today's objective..."></div>
+            <div class="objective-text-tools edit-only">
+              <span>OBJECTIVE TEXT</span>
+              <button id="objectiveTextSmaller" type="button">A−</button>
+              <button id="objectiveTextBigger" type="button">A+</button>
+            </div>
           </div>
         </div>
       </div>
@@ -96,12 +102,12 @@
       <span>TITLE</span><button data-font-part="title" data-font-delta="-2">A−</button><button data-font-part="title" data-font-delta="2">A+</button>
       <span>TEXT</span><button data-font-part="text" data-font-delta="-2">A−</button><button data-font-part="text" data-font-delta="2">A+</button>
     </div>
-    <div class="panel-title task-title">
-      <img class="task-star-img" src="./star.png" alt="">
-      <span data-edit-key="titles.task">TASK OF THE DAY</span>
-    </div>
     <div class="task-content-grid">
       <div class="task-instruction-column">
+        <div class="panel-title task-title">
+          <img class="task-star-img" src="./star.png" alt="">
+          <span data-edit-key="titles.task">TASK OF THE DAY</span>
+        </div>
         <div class="task-step-list" id="taskStepList"></div>
         <div class="task-step-edit-bar edit-only">
           <button class="add-task-step" id="addTaskStepBtn" type="button">+ ADD</button>
@@ -145,10 +151,6 @@
       <span>TITLE</span><button data-font-part="title" data-font-delta="-2">A−</button><button data-font-part="title" data-font-delta="2">A+</button>
       <span>TEXT</span><button data-font-part="text" data-font-delta="-2">A−</button><button data-font-part="text" data-font-delta="2">A+</button>
     </div>
-    <div class="panel-title">
-      <img class="title-star-icon" src="./star.png" alt="">
-      <span data-edit-key="titles.reminders">EARLY FINISHERS</span>
-    </div>
     <div class="early-content-grid">
       <div class="early-media-slot" id="earlyMediaSlot">
         <div class="early-media-placeholder">PIC / GIF<br>OR VIDEO</div>
@@ -157,13 +159,11 @@
         <input id="earlyMediaInput" type="file" accept="image/*,video/*" hidden>
       </div>
       <div class="early-text-column">
-        <div class="reminder-list" id="reminderList"></div>
-        <div class="list-edit-bar edit-only">
-          <span>MARKER</span>
-          <button class="marker-choice" data-marker-target="reminders" data-marker="star" type="button">★</button>
-          <button class="marker-choice" data-marker-target="reminders" data-marker="bullet" type="button">•</button>
-          <button class="add-reminder" id="addReminderBtn" type="button">+ ADD</button>
+        <div class="panel-title early-title">
+          <img class="title-star-icon" src="./star.png" alt="">
+          <span data-edit-key="titles.reminders">EARLY FINISHERS</span>
         </div>
+        <div class="reminder-list early-three-list" id="reminderList"></div>
       </div>
     </div>
   </section>
@@ -199,8 +199,20 @@
   </section>
 
 
-  <a class="dashboard-nav grouper-nav" href="./grouper.html?v=44">RAINBOW GROUPER</a>
-  <a class="page-arrow page-arrow-right" href="./cleanup.html?v=44" aria-label="Open clean up board">→</a>
+  <a class="dashboard-nav grouper-nav" href="./grouper.html?v=46">RAINBOW GROUPER</a>
+  <a class="page-arrow page-arrow-right" href="./cleanup.html?v=46" aria-label="Open clean up board">→</a>
+
+
+  <div class="rich-format-toolbar edit-only" id="richFormatToolbar" aria-label="Selected text formatting">
+    <span>HIGHLIGHT TEXT:</span>
+    <button class="rich-underline" id="richUnderlineBtn" type="button" title="Underline selected text"><u>U</u></button>
+    <button class="rich-color" type="button" data-rich-color="#F3237C" style="--rich-color:#F3237C" title="Pink text"></button>
+    <button class="rich-color" type="button" data-rich-color="#F47607" style="--rich-color:#F47607" title="Orange text"></button>
+    <button class="rich-color" type="button" data-rich-color="#FAB910" style="--rich-color:#FAB910" title="Yellow text"></button>
+    <button class="rich-color" type="button" data-rich-color="#56A328" style="--rich-color:#56A328" title="Green text"></button>
+    <button class="rich-color" type="button" data-rich-color="#22B8F4" style="--rich-color:#22B8F4" title="Blue text"></button>
+    <button class="rich-color" type="button" data-rich-color="#7618CF" style="--rich-color:#7618CF" title="Purple text"></button>
+  </div>
 
   <div class="grade-switch" aria-label="Grade profile">
     <button class="grade-btn" data-grade="first" type="button">1ST GRADE</button>
@@ -215,10 +227,10 @@
 </div>
 
   <div class="page-overlay" id="pageOverlay" aria-hidden="true">
-    <iframe class="page-frame" id="grouperFrame" src="./grouper.html?v=44&embedded=1" title="Rainbow Grouper" allow="fullscreen"></iframe>
-    <iframe class="page-frame" id="cleanupFrame" src="./cleanup.html?v=44&embedded=1" title="Clean Up" allow="autoplay; fullscreen"></iframe>
+    <iframe class="page-frame" id="grouperFrame" src="./grouper.html?v=46&embedded=1" title="Rainbow Grouper" allow="fullscreen"></iframe>
+    <iframe class="page-frame" id="cleanupFrame" src="./cleanup.html?v=46&embedded=1" title="Clean Up" allow="autoplay; fullscreen"></iframe>
   </div>
 
-<script src="./app.js?v=44"></script>
+<script src="./app.js?v=46"></script>
 </body>
 </html>

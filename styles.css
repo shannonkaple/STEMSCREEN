@@ -2422,3 +2422,385 @@ body.edit-mode .task-step-row{
 /* Manual time chooser still only exists in Edit mode. */
 .end-time-input{display:none !important}
 body.edit-mode .end-time-input{display:block !important}
+
+
+/* ============================================================
+   v45 — headings over text columns + uniform multi-step text
+   ============================================================ */
+
+/* These three panels use the same visual rule:
+   FULL-HEIGHT MEDIA LEFT / HEADING + TEXT RIGHT. */
+.objective-section,
+.task,
+.reminders{
+  min-height:0 !important;
+  overflow:hidden !important;
+}
+
+/* ---------------- OBJECTIVE ---------------- */
+.objective-content{
+  width:100% !important;
+  height:100% !important;
+  min-height:0 !important;
+  display:grid !important;
+  grid-template-columns:minmax(0,48%) minmax(0,52%) !important;
+  grid-template-rows:minmax(0,1fr) !important;
+  gap:8px !important;
+  align-items:stretch !important;
+}
+.objective-content .section-icon-slot{
+  grid-column:1 !important;
+  grid-row:1 !important;
+  width:100% !important;
+  height:100% !important;
+  min-width:0 !important;
+  min-height:0 !important;
+  max-width:none !important;
+  max-height:none !important;
+  margin:0 !important;
+  align-self:stretch !important;
+  border-radius:15px !important;
+}
+.objective-text-column{
+  grid-column:2 !important;
+  grid-row:1 !important;
+  min-width:0 !important;
+  min-height:0 !important;
+  display:grid !important;
+  grid-template-rows:auto minmax(0,1fr) !important;
+  gap:6px !important;
+  position:relative !important;
+  overflow:hidden !important;
+}
+.objective-title{
+  width:100% !important;
+  justify-content:center !important;
+  text-align:center !important;
+  margin:0 !important;
+  min-height:0 !important;
+}
+.objective-input{
+  width:100% !important;
+  height:100% !important;
+  min-width:0 !important;
+  min-height:0 !important;
+  max-height:none !important;
+  align-self:stretch !important;
+}
+body:not(.edit-mode) .objective-content:not(.has-objective-image){
+  grid-template-columns:1fr !important;
+}
+body:not(.edit-mode) .objective-content:not(.has-objective-image) .section-icon-slot{
+  display:none !important;
+}
+body:not(.edit-mode) .objective-content:not(.has-objective-image) .objective-text-column{
+  grid-column:1 !important;
+}
+
+/* ---------------- TASK OF THE DAY ---------------- */
+.task{
+  grid-template-rows:minmax(0,1fr) !important;
+}
+.task-content-grid{
+  width:100% !important;
+  height:100% !important;
+  min-height:0 !important;
+  grid-template-columns:minmax(0,66%) minmax(220px,34%) !important;
+  grid-template-rows:minmax(0,1fr) !important;
+  gap:9px !important;
+}
+.task-stage{
+  grid-column:1 !important;
+  grid-row:1 !important;
+  height:100% !important;
+  min-height:0 !important;
+  align-self:stretch !important;
+}
+.task-instruction-column{
+  grid-column:2 !important;
+  grid-row:1 !important;
+  min-width:0 !important;
+  min-height:0 !important;
+  display:grid !important;
+  grid-template-rows:auto minmax(0,1fr) auto !important;
+  gap:6px !important;
+  overflow:hidden !important;
+}
+.task-title{
+  width:100% !important;
+  justify-content:center !important;
+  text-align:center !important;
+  margin:0 !important;
+  font-size:clamp(25px,2.55vw,47px) !important;
+}
+.task-star-img{
+  width:1em !important;
+  max-height:1em !important;
+}
+.task-step-list{
+  min-height:0 !important;
+  height:100% !important;
+}
+
+/* ---------------- EARLY FINISHERS ---------------- */
+.reminders{
+  display:block !important;
+  padding:7px 9px !important;
+}
+.early-content-grid{
+  width:100% !important;
+  height:100% !important;
+  min-height:0 !important;
+  display:grid !important;
+  grid-template-columns:minmax(105px,34%) minmax(0,66%) !important;
+  grid-template-rows:minmax(0,1fr) !important;
+  gap:8px !important;
+  align-items:stretch !important;
+  overflow:hidden !important;
+}
+.early-media-slot{
+  grid-column:1 !important;
+  grid-row:1 !important;
+  width:100% !important;
+  height:100% !important;
+  min-width:0 !important;
+  min-height:0 !important;
+  max-width:none !important;
+  max-height:none !important;
+  aspect-ratio:auto !important;
+  align-self:stretch !important;
+  justify-self:stretch !important;
+  border-radius:15px !important;
+}
+.early-text-column{
+  grid-column:2 !important;
+  grid-row:1 !important;
+  min-width:0 !important;
+  min-height:0 !important;
+  height:100% !important;
+  display:grid !important;
+  grid-template-rows:auto minmax(0,1fr) auto !important;
+  gap:6px !important;
+  overflow:hidden !important;
+}
+.early-title{
+  width:100% !important;
+  justify-content:center !important;
+  text-align:center !important;
+  margin:0 !important;
+  font-size:clamp(25px,2.55vw,47px) !important;
+}
+.title-star-icon{
+  width:1em !important;
+  height:1em !important;
+}
+.reminder-list{
+  min-height:0 !important;
+  height:100% !important;
+}
+
+/* ---------------- UNIFORM STEP TEXT ----------------
+   Number of rows changes BOX height, not font size. */
+.success-list .step-text,
+.reminder-list .reminder-text,
+.task-step-list .task-step-text{
+  font-size:clamp(17px,1.25vw,22px) !important;
+  line-height:1.08 !important;
+  padding:9px 8px 6px !important;
+}
+
+/* Kill every older count-specific size override. */
+.success-list[data-count="1"] .step-text,
+.success-list[data-count="2"] .step-text,
+.success-list[data-count="3"] .step-text,
+.success-list[data-count="4"] .step-text,
+.success-list[data-count="5"] .step-text,
+.success-list[data-count="6"] .step-text,
+.reminder-list[data-count="1"] .reminder-text,
+.reminder-list[data-count="2"] .reminder-text,
+.reminder-list[data-count="3"] .reminder-text,
+.reminder-list[data-count="4"] .reminder-text,
+.reminder-list[data-count="5"] .reminder-text,
+.reminder-list[data-count="6"] .reminder-text,
+.task-step-list[data-count="1"] .task-step-text,
+.task-step-list[data-count="2"] .task-step-text,
+.task-step-list[data-count="3"] .task-step-text,
+.task-step-list[data-count="4"] .task-step-text,
+.task-step-list[data-count="5"] .task-step-text,
+.task-step-list[data-count="6"] .task-step-text,
+.task-step-list[data-count="7"] .task-step-text,
+.task-step-list[data-count="8"] .task-step-text{
+  font-size:clamp(17px,1.25vw,22px) !important;
+  padding:9px 8px 6px !important;
+}
+
+/* Row text remains vertically centered with its marker. */
+.success-list .step-row,
+.reminder-list .reminder-row,
+.task-step-row{
+  align-items:center !important;
+}
+.success-list .list-marker,
+.reminder-list .list-marker{
+  align-self:center !important;
+  justify-self:center !important;
+}
+
+/* Media always uses every available pixel WITHOUT cropping. */
+.objective-content .section-icon-slot img,
+.task-preview img,
+.task-preview video,
+.early-media-slot img,
+.early-media-slot video{
+  width:100% !important;
+  height:100% !important;
+  max-width:100% !important;
+  max-height:100% !important;
+  object-fit:contain !important;
+  object-position:center !important;
+}
+
+@media(max-width:1000px){
+  .objective-content{
+    grid-template-columns:minmax(0,46%) minmax(0,54%) !important;
+  }
+  .task-content-grid{
+    grid-template-columns:minmax(0,62%) minmax(210px,38%) !important;
+  }
+  .early-content-grid{
+    grid-template-columns:minmax(95px,32%) minmax(0,68%) !important;
+  }
+}
+
+
+/* ============================================================
+   v46 — selected-text colors/underline + 3-slot Early Finishers
+   ============================================================ */
+.rich-editor{
+  outline:none !important;
+  white-space:pre-wrap !important;
+  overflow-wrap:break-word !important;
+  word-break:normal !important;
+  writing-mode:horizontal-tb !important;
+}
+body.edit-mode .rich-editor{cursor:text}
+body.edit-mode .rich-editor:empty::before{
+  content:attr(data-placeholder);
+  color:#7b7b7b;
+  opacity:.85;
+  pointer-events:none;
+}
+
+.rich-format-toolbar{
+  position:absolute;
+  left:50%;
+  bottom:47px;
+  transform:translateX(-50%);
+  z-index:600;
+  align-items:center;
+  gap:4px;
+  padding:4px 7px;
+  border:2px solid #000;
+  border-radius:999px;
+  background:#fff;
+  box-shadow:0 2px 6px #0002;
+  white-space:nowrap;
+}
+.rich-format-toolbar>span{
+  font-family:"VAGTaskscreen",sans-serif;
+  font-size:8px;
+  font-weight:900;
+}
+.rich-underline,.rich-color{
+  width:27px;height:27px;
+  border:2px solid #000;
+  border-radius:50%;
+  padding:0;
+}
+.rich-underline{
+  background:#fff;
+  font:900 12px/1 "VAGTaskscreen",sans-serif;
+}
+.rich-color{background:var(--rich-color)}
+.rich-color:hover,.rich-underline:hover{transform:scale(1.08)}
+
+.objective-check-icon{
+  width:1em !important;
+  height:1em !important;
+  flex:0 0 auto;
+}
+.objective-input{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  flex-direction:column !important;
+  white-space:pre-wrap !important;
+}
+body.edit-mode .objective-input{
+  align-items:flex-start !important;
+  justify-content:center !important;
+}
+
+/* Early Finishers: exactly 3 centered edit boxes; blank ones hide in view. */
+.early-three-list{
+  min-height:0 !important;
+  height:100% !important;
+  display:grid !important;
+  gap:7px !important;
+  overflow:hidden !important;
+}
+.early-three-list[data-count="1"]{grid-template-rows:minmax(0,1fr) !important}
+.early-three-list[data-count="2"]{grid-template-rows:repeat(2,minmax(0,1fr)) !important}
+.early-three-list[data-count="3"]{grid-template-rows:repeat(3,minmax(0,1fr)) !important}
+
+.early-three-row,
+body.edit-mode .early-three-row{
+  min-height:0 !important;
+  height:auto !important;
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) 28px !important;
+  align-items:center !important;
+  gap:5px !important;
+  padding:5px 7px !important;
+  border:2px solid rgba(0,0,0,.18) !important;
+  border-radius:14px !important;
+  background:#fff !important;
+  overflow:hidden !important;
+}
+.early-three-row .reminder-text{
+  width:100% !important;
+  height:100% !important;
+  min-height:0 !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  text-align:center !important;
+  padding:8px !important;
+  color:#173d61;
+  overflow:hidden !important;
+}
+body:not(.edit-mode) .early-three-row .reminder-remove{display:none !important}
+.early-three-row .list-marker,
+.early-three-row .reminder-pic-wrap{display:none !important}
+
+.step-text.rich-editor,
+.task-step-text.rich-editor{
+  display:flex !important;
+  align-items:center !important;
+}
+.step-text.rich-editor{justify-content:flex-start !important}
+.task-step-text.rich-editor{justify-content:center !important}
+
+.rich-editor span,.rich-editor u{
+  font-size:inherit;
+  line-height:inherit;
+}
+
+@media(max-width:1000px){
+  .rich-format-toolbar{
+    bottom:43px;
+    gap:3px;
+    padding:3px 5px;
+  }
+  .rich-color,.rich-underline{width:23px;height:23px}
+}
