@@ -1,0 +1,3359 @@
+@font-face{font-family:"KAHomebodyClub";src:url("./KAHomebodyClub.ttf") format("truetype");font-display:swap}
+@font-face{font-family:"VAGTaskscreen";src:url("./VAG-Rounded-Std-Black_47296.ttf") format("truetype");font-display:swap}
+:root{
+  --ink:#17131e;--objective:#FFD31B;--voice:#CF67CE;--timer:#FF6A0A;
+  --task:#49AFE0;--reminders:#91D448;--bath-neutral:#F1EAF4;
+  --stroke:5px;--panel-radius:26px
+}
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#fff}
+body{font-family:"VAGTaskscreen","Arial Rounded MT Bold",Arial,sans-serif;color:var(--ink)}
+button,input,textarea{font:inherit}button{cursor:pointer}
+.board{
+  position:relative;width:100vw;height:100vh;padding:9px;
+  display:grid;grid-template-columns:repeat(12,1fr);grid-template-rows:repeat(8,1fr);
+  gap:8px;background:#fff
+}
+.panel{position:relative;min-width:0;min-height:0;border:var(--stroke) solid #000;border-radius:var(--panel-radius);overflow:hidden}
+.learning{grid-column:1/8;grid-row:1/4;background:var(--objective);padding:8px 10px}
+.countdown-panel{grid-column:8/10;grid-row:1/3;background:var(--timer);padding:7px 8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px}
+.voice{grid-column:10/13;grid-row:1/3;background:var(--voice);padding:7px 8px 6px;display:flex;flex-direction:column;overflow:visible}
+.task{grid-column:1/8;grid-row:4/9;background:var(--task);padding:8px 10px;display:grid;grid-template-rows:auto auto minmax(0,1fr) auto;gap:5px}
+.reminders{grid-column:8/13;grid-row:3/7;background:var(--reminders);padding:8px 10px;display:flex;flex-direction:column;gap:6px}
+.bathroom{grid-column:8/13;grid-row:7/9;background:var(--bath-neutral);padding:6px 8px;display:flex;flex-direction:column;gap:5px;transition:background .18s ease}
+
+.panel-title,.learning-title{
+  min-width:0;display:flex;align-items:center;justify-content:center;gap:6px;
+  font-family:"KAHomebodyClub","VAGTaskscreen",sans-serif;
+  line-height:.9;text-transform:uppercase;color:#fff;
+  -webkit-text-stroke:1.3px #000;paint-order:stroke fill;
+  text-shadow:-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000;
+  white-space:nowrap
+}
+.panel-title{font-size:clamp(27px,2.85vw,52px)}
+.learning-title{font-size:clamp(25px,2.55vw,47px)}
+.title-icon{width:1em;height:1em;flex:0 0 auto;overflow:visible}
+[data-edit-key],[data-edit-voice-label],[data-table-label]{outline:none}
+body.edit-mode [contenteditable="true"]{box-shadow:0 0 0 2px rgba(0,0,0,.72);border-radius:5px;background:rgba(255,255,255,.25)}
+
+.learning-grid{height:100%;display:grid;grid-template-columns:minmax(0,.82fr) 3px minmax(0,1.18fr);gap:8px}
+.learning-section{min-width:0;min-height:0;display:flex;flex-direction:column;gap:5px}
+.learning-divider{background:rgba(0,0,0,.45);border-radius:99px}
+.objective-input{
+  flex:1;min-height:0;width:100%;resize:none;border:3px solid #000;border-radius:17px;background:#fff;
+  padding:8px 12px;color:#17131e;font-size:clamp(20px,1.95vw,35px);line-height:1.04;
+  font-family:"VAGTaskscreen","Arial Rounded MT Bold",sans-serif;text-align:center
+}
+body:not(.edit-mode) .objective-input{pointer-events:none}
+.success-list{flex:1;min-height:0;display:flex;flex-direction:column;gap:4px;overflow:auto}
+.add-step,.add-reminder{align-self:center;border:2px solid #000;border-radius:999px;background:#fff;padding:3px 11px;font-size:9px}
+
+.step-row,.reminder-row{
+  display:grid;grid-template-columns:50px 23px minmax(0,1fr) 23px;gap:6px;align-items:center;
+  min-height:54px;background:rgba(255,255,255,.88);border:2px solid rgba(0,0,0,.16);border-radius:12px;padding:3px 5px
+}
+.step-pic-wrap,.reminder-pic-wrap{
+  position:relative;width:46px;height:46px;border:2px solid rgba(0,0,0,.38);
+  border-radius:9px;overflow:hidden;background:#fff;flex:0 0 auto
+}
+.step-pic,.reminder-pic{width:100%;height:100%;display:block;object-fit:cover}
+.step-pic-placeholder,.reminder-pic-placeholder{
+  width:100%;height:100%;display:flex;align-items:center;justify-content:center;text-align:center;
+  padding:3px;font-size:7px;line-height:.93;color:#777;background:rgba(255,255,255,.7)
+}
+.step-pic-button,.reminder-pic-button{position:absolute;inset:0;width:100%;height:100%;border:0;background:transparent;padding:0}
+body:not(.edit-mode) .step-pic-button,body:not(.edit-mode) .reminder-pic-button{pointer-events:none}
+.step-pic-remove,.reminder-pic-remove{
+  position:absolute;top:2px;right:2px;width:17px;height:17px;border:1.5px solid #000;border-radius:50%;
+  background:#fff;color:#000;font-size:11px;line-height:13px;padding:0;display:none;z-index:3
+}
+body.edit-mode .step-pic-remove.has-image,body.edit-mode .reminder-pic-remove.has-image{display:block}
+.step-pic-input,.reminder-pic-input{display:none}
+.step-check,.reminder-check{width:20px;height:20px;accent-color:#56A328}
+.step-text,.reminder-text{
+  width:100%;min-width:0;border:0;background:transparent;outline:none;
+  font-size:clamp(13px,1.14vw,20px);line-height:1;font-family:"VAGTaskscreen",sans-serif;text-align:center
+}
+.step-remove,.reminder-remove{display:none;border:0;background:transparent;font-size:20px;line-height:1}
+body.edit-mode .step-remove,body.edit-mode .reminder-remove{display:block}
+body:not(.edit-mode) .step-text,body:not(.edit-mode) .reminder-text{pointer-events:none}
+
+.countdown-title{font-size:clamp(22px,2.1vw,37px)}
+.countdown-input{
+  width:90%;border:3px solid #000;border-radius:15px;background:#fff;text-align:center;
+  font-family:"VAGTaskscreen",sans-serif;font-size:clamp(30px,3.1vw,53px);line-height:1;padding:3px 4px
+}
+.countdown-controls{display:flex;gap:3px}
+.countdown-controls button{border:2px solid #000;border-radius:999px;background:#fff;padding:2px 7px;font-size:8px}
+
+.voice .panel-title{font-size:clamp(27px,2.65vw,48px)}
+.voice-buttons{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:5px;align-items:center;padding:7px 5px 9px;overflow:visible}
+.voice-btn{
+  min-width:0;aspect-ratio:1/1;border:3px solid #000;border-radius:50%;background:var(--vc);color:#fff;
+  font-size:clamp(20px,2vw,35px);line-height:1;font-family:"VAGTaskscreen",sans-serif;
+  -webkit-text-stroke:.7px #000;paint-order:stroke fill;padding:0;transition:transform .14s ease,box-shadow .14s ease
+}
+.voice-btn.active{
+  box-shadow:inset 0 0 0 4px #fff,0 4px 0 rgba(0,0,0,.22);transform:scale(1.38);
+  z-index:5;position:relative;animation:voicePulse 1s ease-in-out infinite
+}
+.voice-label{
+  margin-top:auto;min-height:40px;display:flex;align-items:center;justify-content:center;text-align:center;
+  font-size:clamp(24px,2.35vw,41px);line-height:.9;text-transform:uppercase;color:#fff;
+  -webkit-text-stroke:1px #000;paint-order:stroke fill;
+  text-shadow:-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000
+}
+.voice-label.active-voice-label{animation:voiceWordPulse 1s ease-in-out infinite}
+@keyframes voicePulse{0%,100%{transform:scale(1.38);filter:brightness(1)}50%{transform:scale(1.52);filter:brightness(1.08)}}
+@keyframes voiceWordPulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.08);opacity:.62}}
+
+.task-star-img{width:clamp(31px,3.2vw,58px);height:auto;object-fit:contain;flex:0 0 auto}
+.task-title{font-size:clamp(33px,3.6vw,64px)}
+.task-sub{
+  width:calc(100% - 8px);justify-self:center;min-height:38px;max-height:72px;overflow:auto;
+  border:2px solid rgba(0,0,0,.25);border-radius:999px;background:rgba(255,255,255,.86);
+  padding:6px 18px 7px;text-align:center;font-size:clamp(18px,1.65vw,30px);line-height:1.02;color:#16496f;display:flex;align-items:center;justify-content:center
+}
+.task-sub:empty::before{content:attr(data-placeholder);opacity:.58}
+
+.early-finisher-wrap{
+  position:relative;
+  min-height:44px;
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr);
+  align-items:center;
+  gap:9px;
+  background:rgba(255,255,255,.88);
+  border:2px solid rgba(0,0,0,.22);
+  border-radius:16px;
+  padding:6px 12px;
+}
+.early-finisher-label{
+  font-family:"KAHomebodyClub","VAGTaskscreen",sans-serif;
+  font-size:clamp(17px,1.55vw,27px);
+  line-height:.92;
+  color:#fff;
+  -webkit-text-stroke:.9px #000;
+  paint-order:stroke fill;
+  text-shadow:-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000;
+  white-space:nowrap;
+}
+.early-finisher-text{
+  min-width:0;
+  text-align:center;
+  font-size:clamp(16px,1.45vw,25px);
+  line-height:1;
+  color:#16496f;
+  outline:none;
+}
+.early-finisher-text:empty::before{
+  content:attr(data-placeholder);
+  opacity:.5;
+}
+.early-finisher-size{
+  position:absolute;
+  right:6px;
+  top:-27px;
+  gap:3px;
+  background:rgba(255,255,255,.96);
+  border:2px solid #000;
+  border-radius:999px;
+  padding:2px 3px;
+}
+.early-finisher-size button{
+  width:27px;
+  height:22px;
+  border:1.5px solid #000;
+  border-radius:999px;
+  background:#fff;
+  padding:0;
+  font-size:9px;
+}
+body:not(.edit-mode) .early-finisher-wrap.is-empty{
+  display:none;
+}
+
+.task-stage{position:relative;min-height:0;border:0;border-radius:22px;background:#fff;overflow:hidden}
+.task-preview{width:100%;height:100%;display:flex;align-items:center;justify-content:center;padding:12px;text-align:center}
+.task-preview img,.task-preview video,.task-preview iframe{max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;border:0}
+.task-preview iframe{width:100%;height:100%}
+.task-text-preview{font-size:clamp(28px,3.3vw,58px);line-height:1.04;white-space:pre-wrap}
+.task-empty{font-size:clamp(18px,1.7vw,28px);color:#37749b}
+.empty-image-icon{width:clamp(74px,8vw,130px);height:auto;display:block;margin:0 auto 6px}
+.task-editor{
+  position:absolute;left:9px;right:9px;top:8px;z-index:15;background:rgba(255,255,255,.97);
+  border:3px solid #000;border-radius:15px;padding:7px;box-shadow:0 5px 16px rgba(0,0,0,.15)
+}
+.mode-row{display:flex;gap:5px;margin-bottom:6px}
+.mode-btn,.file-btn,.clear-task{border:2px solid #000;border-radius:999px;background:#f4f4f4;padding:5px 10px;font-size:11px;text-transform:uppercase}
+.mode-btn.active{background:#D5F0FE}
+.task-control{display:none;gap:5px;align-items:center}.task-control.active{display:flex}
+.task-control textarea{width:100%;min-height:58px;resize:vertical;border:2px solid #000;border-radius:10px;padding:6px 8px}
+.task-control input[type="url"]{flex:1;min-width:0;border:2px solid #000;border-radius:10px;padding:6px 8px}
+.clear-task{margin-top:6px;background:#ffe7ec}
+
+.reminders .panel-title{font-size:clamp(28px,2.85vw,51px)}
+.reminder-list{flex:1;min-height:0;display:flex;flex-direction:column;gap:5px;overflow:auto}
+.reminder-row{grid-template-columns:58px 25px minmax(0,1fr) 25px;min-height:62px}
+.reminder-pic-wrap{width:54px;height:54px}
+.reminder-text{font-size:clamp(15px,1.32vw,23px)}
+
+.bathroom-top{display:grid;grid-template-columns:minmax(0,1fr) minmax(150px,.8fr);gap:7px;align-items:center}
+.bathroom-title{font-size:clamp(23px,2.2vw,40px);justify-content:flex-start;padding-left:3px}
+.bathroom-current{
+  min-height:48px;display:flex;align-items:center;justify-content:center;border:4px solid #000;border-radius:13px;
+  background:#fff;color:#17131e;text-align:center;font-size:clamp(29px,2.9vw,52px);line-height:.88;
+  text-transform:uppercase;font-family:"KAHomebodyClub","VAGTaskscreen",sans-serif;-webkit-text-stroke:0;text-shadow:none
+}
+.bathroom-current.is-empty{display:flex;background:#fff;border-color:#000;color:transparent}
+.bathroom-current.flash{animation:bathroomBoxPulse 1s ease-in-out infinite}
+@keyframes bathroomBoxPulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.02);opacity:.58}}
+.bathroom-bottom-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:5px;align-items:center;min-height:0}
+.table-grid.one-row{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;min-height:0}
+.table-btn{
+  min-width:0;height:34px;border:2.5px solid var(--c);border-radius:10px;background:var(--soft);color:var(--c);
+  font-size:clamp(9px,.78vw,13px);text-transform:uppercase;overflow:hidden;padding:0 2px
+}
+.table-btn.active{background:#fff;box-shadow:inset 0 0 0 3px var(--c);transform:scale(.97)}
+.table-btn.called:not(.active){background:#E3E4E8!important;color:#8A8F99!important;border-color:#BFC4CC;opacity:.75}
+.bathroom-actions{display:flex;gap:3px}
+.mini-btn{border:2px solid #332B52;border-radius:999px;background:#fff;padding:2px 7px;font-size:8px}
+
+.panel-tools{
+  position:absolute;top:4px;right:5px;z-index:40;display:flex;align-items:center;gap:2px;padding:2px 4px;
+  background:rgba(255,255,255,.96);border:2px solid #000;border-radius:999px
+}
+.panel-tools span{font-size:7px;color:#000;-webkit-text-stroke:0;text-shadow:none}
+.panel-tools button{width:25px;height:22px;border:1.5px solid #000;border-radius:999px;background:#fff;padding:0;font-size:9px}
+.edit-only{display:none}body.edit-mode .edit-only{display:flex}
+
+.grade-switch,.utilities{
+  position:absolute;z-index:70;bottom:13px;display:flex;align-items:center;gap:4px;padding:4px;
+  border:2px solid #000;border-radius:999px;background:rgba(255,255,255,.94);box-shadow:0 3px 10px rgba(0,0,0,.12)
+}
+.grade-switch{left:15px}.utilities{right:15px}
+.grade-btn,.utility{height:30px;border:0;border-radius:999px;background:transparent;padding:0 11px;font-size:10px}
+.grade-btn.active{background:#332B52;color:#fff}.utility{background:#fff;border:2px solid #000;font-size:10px}
+.save-status{font-size:8px;padding-left:5px;opacity:.45}.save-status.saving{opacity:1}
+
+@media(max-width:900px){
+  :root{--stroke:3px;--panel-radius:18px}
+  .board{padding:6px;gap:6px}
+  .learning-title{font-size:clamp(19px,2.2vw,32px)}
+  .learning-grid{grid-template-columns:.78fr 2px 1.22fr;gap:5px}
+  .step-row{grid-template-columns:41px 19px minmax(0,1fr) 19px;gap:4px;min-height:45px;padding:2px 4px}
+  .step-pic-wrap{width:38px;height:38px}
+  .step-text{font-size:clamp(10px,1vw,15px)}
+  .countdown-title{font-size:clamp(17px,1.8vw,28px)}
+  .countdown-input{font-size:clamp(24px,2.7vw,40px)}
+  .voice .panel-title{font-size:clamp(22px,2.35vw,36px)}
+  .voice-btn{font-size:clamp(16px,1.8vw,27px)}
+  .voice-label{font-size:clamp(19px,2vw,31px);min-height:34px}
+  .reminder-row{grid-template-columns:45px 21px minmax(0,1fr) 21px;min-height:49px}
+  .reminder-pic-wrap{width:42px;height:42px}
+  .bathroom-top{grid-template-columns:1fr .85fr}
+  .bathroom-current{min-height:39px;font-size:clamp(23px,2.5vw,40px)}
+  .table-btn{height:29px;font-size:clamp(7px,.72vw,11px)}
+  .grade-switch,.utilities{bottom:7px}
+}
+
+@media(max-width:900px){
+  .early-finisher-wrap{min-height:36px;padding:4px 8px;gap:6px}
+  .early-finisher-label{font-size:clamp(13px,1.35vw,20px)}
+  .early-finisher-text{font-size:clamp(12px,1.25vw,19px)}
+}
+
+
+.dashboard-nav{
+  position:absolute;
+  z-index:72;
+  left:50%;
+  bottom:13px;
+  transform:translateX(-50%);
+  text-decoration:none;
+  color:#332B52;
+  background:linear-gradient(90deg,#FFD5E7,#FFE0C6,#FFF3AD,#D9EFCF,#D5F0FE,#E7DCF6);
+  border:2px solid #000;
+  border-radius:999px;
+  padding:7px 15px 6px;
+  font-family:"KAHomebodyClub","VAGTaskscreen",sans-serif;
+  font-size:clamp(12px,1vw,17px);
+  line-height:1;
+  box-shadow:0 3px 10px rgba(0,0,0,.12);
+  white-space:nowrap;
+}
+.page-arrow{
+  position:absolute;
+  z-index:75;
+  top:50%;
+  width:46px;
+  height:58px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  transform:translateY(-50%);
+  text-decoration:none;
+  background:rgba(255,255,255,.95);
+  border:3px solid #000;
+  color:#332B52;
+  border-radius:18px;
+  font-family:"VAGTaskscreen",sans-serif;
+  font-size:34px;
+  line-height:1;
+  box-shadow:0 4px 12px rgba(0,0,0,.15);
+}
+.page-arrow-right{right:3px}
+.page-arrow:hover,.dashboard-nav:hover{filter:brightness(.98);transform:translateY(-50%) scale(1.03)}
+.dashboard-nav:hover{transform:translateX(-50%) scale(1.03)}
+@media(max-width:900px){
+  .dashboard-nav{bottom:7px;padding:5px 10px;font-size:10px}
+  .page-arrow{width:34px;height:46px;font-size:26px;border-width:2px}
+}
+
+
+/* ---------- v23 refined timer / lists / bathroom ---------- */
+
+/* Success Criteria collapses when there is nothing written. */
+body:not(.edit-mode) .learning-grid.all-success-empty{
+  grid-template-columns:1fr;
+}
+body:not(.edit-mode) .learning-grid.all-success-empty .success-section,
+body:not(.edit-mode) .learning-grid.all-success-empty .learning-divider{
+  display:none;
+}
+body:not(.edit-mode) .learning-grid.all-success-empty .objective-section{
+  grid-column:1/-1;
+}
+
+/* Blank rows exist only in EDIT mode. */
+body:not(.edit-mode) .step-row.is-blank,
+body:not(.edit-mode) .reminder-row.is-blank{
+  display:none;
+}
+
+/* No checkboxes. Stars/bullets are display markers. */
+.step-row,.reminder-row{
+  grid-template-columns:auto auto minmax(0,1fr) auto !important;
+  gap:7px !important;
+}
+.list-marker{
+  width:20px;
+  text-align:center;
+  font-family:"VAGTaskscreen",sans-serif;
+  font-size:clamp(17px,1.35vw,24px);
+  line-height:1;
+  color:#332B52;
+}
+.step-pic-wrap,.reminder-pic-wrap{
+  width:46px !important;
+  height:46px !important;
+}
+.reminder-pic-wrap{width:50px !important;height:50px !important}
+.step-pic-placeholder,.reminder-pic-placeholder{
+  font-size:8px !important;
+  font-weight:700;
+}
+body:not(.edit-mode) .step-row.no-image .step-pic-wrap,
+body:not(.edit-mode) .reminder-row.no-image .reminder-pic-wrap{
+  display:none;
+}
+body:not(.edit-mode) .step-pic-placeholder,
+body:not(.edit-mode) .reminder-pic-placeholder{
+  display:none;
+}
+body:not(.edit-mode) .step-remove,
+body:not(.edit-mode) .reminder-remove{
+  display:none !important;
+}
+.step-remove,.reminder-remove{
+  border:2px solid #000 !important;
+  border-radius:50%;
+  width:24px;
+  height:24px;
+  background:#fff !important;
+  color:#000;
+  align-items:center;
+  justify-content:center;
+  padding:0 !important;
+  font-size:16px !important;
+}
+body.edit-mode .step-remove,body.edit-mode .reminder-remove{display:flex !important}
+.step-text,.reminder-text{
+  text-align:center !important;
+  padding:4px 5px;
+}
+.list-edit-bar{
+  align-self:center;
+  align-items:center;
+  gap:4px;
+  background:rgba(255,255,255,.9);
+  border:2px solid #000;
+  border-radius:999px;
+  padding:3px 5px;
+}
+.list-edit-bar span{font-size:8px}
+.marker-choice,.list-edit-bar .add-step,.list-edit-bar .add-reminder{
+  border:1.5px solid #000;
+  border-radius:999px;
+  background:#fff;
+  min-width:26px;
+  height:25px;
+  padding:0 8px;
+  font-size:12px;
+}
+.marker-choice.active{
+  background:#332B52;
+  color:#fff;
+}
+
+/* End-time countdown: user chooses class END time, screen shows only MM:SS left. */
+.countdown-panel{
+  gap:4px !important;
+}
+.countdown-title{font-size:clamp(21px,2vw,36px) !important}
+.countdown-display{
+  width:94%;
+  border:3px solid #000;
+  border-radius:15px;
+  background:#fff;
+  text-align:center;
+  font-family:"VAGTaskscreen",sans-serif;
+  font-size:clamp(38px,4.15vw,70px);
+  line-height:.95;
+  padding:5px 3px 2px;
+}
+.end-time-input{
+  width:80%;
+  border:2px solid #000;
+  border-radius:999px;
+  background:rgba(255,255,255,.93);
+  text-align:center;
+  padding:3px 8px;
+  font-size:clamp(12px,1.05vw,17px);
+}
+
+/* Bathroom current table lives centered ABOVE the bottom button row. */
+.bathroom{
+  display:grid !important;
+  grid-template-rows:auto minmax(0,1fr) auto !important;
+  gap:4px !important;
+}
+.bathroom-title{
+  justify-content:center !important;
+  padding-left:0 !important;
+  font-size:clamp(24px,2.35vw,43px) !important;
+}
+.bathroom-current-zone{
+  min-height:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:0 10%;
+}
+.bathroom-current{
+  width:min(92%,460px);
+  min-height:58px !important;
+  font-size:clamp(35px,3.55vw,64px) !important;
+  border-radius:15px !important;
+}
+.bathroom-bottom-row{
+  align-self:end;
+  margin-top:auto;
+  padding-top:2px;
+}
+.table-grid.one-row{align-self:end}
+.table-btn{height:31px !important}
+.bathroom-actions{align-self:end}
+
+@media(max-width:900px){
+  .list-marker{font-size:15px}
+  .step-pic-wrap,.reminder-pic-wrap{width:38px !important;height:38px !important}
+  .countdown-display{font-size:clamp(31px,3.5vw,49px)}
+  .end-time-input{font-size:11px}
+  .bathroom-current-zone{padding:0 7%}
+  .bathroom-current{min-height:44px !important;font-size:clamp(27px,2.8vw,44px) !important}
+  .table-btn{height:27px !important}
+}
+
+
+/* ---------- v24 learning icons + larger step pictures ---------- */
+
+.learning-grid{
+  grid-template-columns:minmax(0,.72fr) 3px minmax(0,1.28fr) !important;
+}
+
+.objective-content,
+.success-content{
+  flex:1;
+  min-height:0;
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr);
+  gap:8px;
+  align-items:start;
+}
+
+.objective-input{
+  min-height:100%;
+}
+
+.section-icon-slot{
+  position:relative;
+  width:64px;
+  height:64px;
+  border:2px solid rgba(0,0,0,.38);
+  border-radius:13px;
+  overflow:hidden;
+  background:#fff;
+  align-self:start;
+  margin-top:2px;
+}
+.section-icon-slot img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+}
+.section-icon-placeholder{
+  width:100%;
+  height:100%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  font-size:9px;
+  color:#777;
+  padding:5px;
+}
+.section-icon-button{
+  position:absolute;
+  inset:0;
+  border:0;
+  background:transparent;
+  padding:0;
+}
+.section-icon-remove{
+  position:absolute;
+  top:3px;
+  right:3px;
+  width:19px;
+  height:19px;
+  border:1.5px solid #000;
+  border-radius:50%;
+  background:#fff;
+  padding:0;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  font-size:12px;
+  z-index:3;
+}
+body.edit-mode .section-icon-remove.has-image{display:flex}
+body:not(.edit-mode) .section-icon-button{pointer-events:none}
+body:not(.edit-mode) .section-icon-slot:not(.has-image){display:none}
+
+/* Success criteria: one shared icon + wrapping criteria text, no per-row pictures. */
+.success-content{overflow:hidden}
+.success-list{
+  min-width:0;
+  overflow:auto;
+}
+.success-list .step-row{
+  grid-template-columns:22px minmax(0,1fr) 24px !important;
+  min-height:46px !important;
+  padding:3px 6px !important;
+}
+.success-list .step-text{
+  min-height:38px;
+  max-height:58px;
+  resize:none;
+  overflow:hidden;
+  white-space:normal;
+  overflow-wrap:anywhere;
+  line-height:1.02 !important;
+  padding:7px 5px 4px !important;
+  font-size:clamp(12px,1.05vw,18px) !important;
+  text-align:left !important;
+}
+
+/* STEPS / reminders: make the image meaningfully larger. */
+.reminder-row{
+  grid-template-columns:20px 76px minmax(0,1fr) 24px !important;
+  min-height:82px !important;
+  padding:4px 7px !important;
+  gap:8px !important;
+}
+.reminder-pic-wrap{
+  width:72px !important;
+  height:72px !important;
+  border-radius:11px !important;
+}
+.reminder-text{
+  min-height:62px;
+  max-height:76px;
+  resize:none;
+  overflow:hidden;
+  white-space:normal;
+  overflow-wrap:anywhere;
+  line-height:1.02 !important;
+  padding:9px 7px 4px !important;
+  font-size:clamp(15px,1.25vw,22px) !important;
+  text-align:center !important;
+}
+.reminder-row.no-image{
+  grid-template-columns:20px minmax(0,1fr) 24px !important;
+}
+
+/* Textareas replacing one-line list inputs. */
+.step-text,.reminder-text{
+  width:100%;
+  border:0;
+  background:transparent;
+  outline:none;
+  font-family:"VAGTaskscreen",sans-serif;
+}
+body:not(.edit-mode) .step-text,
+body:not(.edit-mode) .reminder-text{
+  pointer-events:none;
+}
+
+@media(max-width:900px){
+  .learning-grid{grid-template-columns:minmax(0,.68fr) 2px minmax(0,1.32fr) !important}
+  .section-icon-slot{width:50px;height:50px}
+  .reminder-row{grid-template-columns:17px 58px minmax(0,1fr) 20px !important;min-height:65px !important}
+  .reminder-pic-wrap{width:56px !important;height:56px !important}
+  .reminder-text{min-height:48px;font-size:clamp(11px,1.05vw,16px) !important}
+  .success-list .step-text{font-size:clamp(10px,.95vw,15px) !important}
+}
+
+
+/* ---------- v25 refinements ---------- */
+
+/* Objective gets the ONE large icon. */
+.objective-content{
+  grid-template-columns:96px minmax(0,1fr) !important;
+  gap:10px !important;
+  align-items:start !important;
+}
+.objective-content .section-icon-slot{
+  width:92px !important;
+  height:92px !important;
+  border-radius:17px !important;
+  border-width:3px !important;
+  margin-top:2px !important;
+}
+
+/* Success Criteria has no icon now, so the list gets the full width. */
+.success-content{
+  display:block !important;
+}
+.success-content .success-list{
+  width:100%;
+}
+
+/* Repeat video control in Task editor. */
+.task-loop-toggle{
+  display:flex;
+  align-items:center;
+  gap:5px;
+  border:2px solid #000;
+  border-radius:999px;
+  background:#fff;
+  padding:4px 8px;
+  font-size:10px;
+  white-space:nowrap;
+  cursor:pointer;
+}
+.task-loop-toggle input{
+  width:15px;
+  height:15px;
+  accent-color:#49AFE0;
+}
+
+/* Newly added rows get a very obvious editing state. */
+body.edit-mode .step-row.is-new-row,
+body.edit-mode .reminder-row.is-new-row{
+  outline:3px solid #332B52;
+  outline-offset:1px;
+  background:#fff !important;
+}
+
+@media(max-width:900px){
+  .objective-content{
+    grid-template-columns:70px minmax(0,1fr) !important;
+  }
+  .objective-content .section-icon-slot{
+    width:66px !important;
+    height:66px !important;
+  }
+  .task-loop-toggle{font-size:8px;padding:3px 6px}
+}
+
+
+/* ==== v26 refinements ==== */
+.board{position:relative}
+.learning-grid{grid-template-columns:minmax(360px,1.08fr) 8px minmax(430px,1.72fr)!important}
+.objective-content{grid-template-columns:1fr!important;display:flex!important;flex-direction:column!important;align-items:center!important;gap:10px!important;padding-top:4px}
+.objective-content .section-icon-slot{width:110px!important;height:110px!important;margin:0 auto!important}
+.objective-input{width:100%!important;max-width:none!important;min-height:190px!important;justify-self:center!important}
+.success-section .learning-title,.objective-section .learning-title{justify-content:center}
+.success-content .success-list{display:flex;flex-direction:column;gap:8px;max-height:220px;overflow:auto;padding-right:4px}
+.step-row,.reminder-row{grid-template-columns:28px 86px minmax(0,1fr) 30px!important;align-items:center!important;min-height:82px}
+.step-row.no-image,.reminder-row.no-image{grid-template-columns:28px minmax(0,1fr) 30px!important}
+.step-pic-wrap,.reminder-pic-wrap{width:78px;height:78px;border-radius:10px}
+.step-pic,.reminder-pic{width:78px;height:78px;border-radius:10px;object-fit:cover}
+.step-text,.reminder-text{min-height:66px!important;font-size:clamp(17px,1.35vw,26px)!important;line-height:1.1!important}
+.list-marker{font-size:clamp(22px,1.5vw,28px)!important}
+.panel-title .title-icon,.learning-title .title-icon{width:1.08em!important;height:1.08em!important}
+.voice .panel-title,.bathroom .panel-title{justify-content:center}
+.voice-label{animation:none}
+#bathroomCurrent{min-height:70px;font-size:clamp(28px,2.2vw,40px)!important;display:flex;align-items:center;justify-content:center}
+.fullscreen-btn,.utility#fullscreenToggle{white-space:nowrap}
+body.view-mode .step-row.is-blank,body.view-mode .reminder-row.is-blank{display:none!important}
+body.view-mode .step-pic-wrap .step-pic-placeholder,body.view-mode .reminder-pic-wrap .reminder-pic-placeholder,body.view-mode .step-pic-wrap .step-pic-button,body.view-mode .reminder-pic-wrap .reminder-pic-button,body.view-mode .step-pic-wrap .step-pic-remove,body.view-mode .reminder-pic-wrap .reminder-pic-remove{display:none!important}
+body.view-mode .step-row.no-image .step-pic-wrap,body.view-mode .reminder-row.no-image .reminder-pic-wrap{display:none!important}
+body.view-mode .step-row.no-image,body.view-mode .reminder-row.no-image{grid-template-columns:28px minmax(0,1fr)!important}
+body.view-mode .step-remove,body.view-mode .reminder-remove{display:none!important}
+body.edit-mode .step-remove,body.edit-mode .reminder-remove{display:grid!important}
+.panel.fullscreen-panel{position:fixed!important;inset:16px!important;z-index:9999!important;margin:0!important;width:auto!important;height:auto!important;max-height:none!important;overflow:auto!important;background:inherit!important;box-shadow:0 12px 40px rgba(0,0,0,.28)}
+.panel.fullscreen-panel .panel-tools{position:sticky;top:0;z-index:5;background:rgba(255,255,255,.9)}
+.panel-tools .fs-panel-btn{margin-left:auto;border:2px solid #000;border-radius:999px;background:#fff;padding:3px 9px;font-size:10px;font-weight:900}
+@media(max-width:900px){
+ .objective-input{width:100%!important;min-height:140px!important}
+ .objective-content .section-icon-slot{width:82px!important;height:82px!important}
+ .step-row,.reminder-row{grid-template-columns:22px 64px minmax(0,1fr) 24px!important;min-height:68px}
+ .step-pic-wrap,.reminder-pic-wrap,.step-pic,.reminder-pic{width:58px;height:58px}
+}
+
+
+/* ==== v27 objective layout + list reliability visual polish ==== */
+.objective-section{
+  min-height:0;
+}
+.objective-content{
+  flex:1!important;
+  min-height:0!important;
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  gap:8px!important;
+  padding:4px 8px 6px!important;
+}
+.objective-content .section-icon-slot{
+  width:132px!important;
+  height:132px!important;
+  flex:0 0 132px!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  overflow:visible!important;
+  margin:0 auto!important;
+  box-shadow:none!important;
+}
+.objective-content .section-icon-slot img{
+  width:100%!important;
+  height:100%!important;
+  object-fit:contain!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+.objective-content .section-icon-placeholder{
+  width:100%!important;
+  height:100%!important;
+  border:2px dashed rgba(0,0,0,.35)!important;
+  border-radius:14px!important;
+  background:rgba(255,255,255,.35)!important;
+  font-size:12px!important;
+}
+body:not(.edit-mode) .objective-content .section-icon-slot:not(.has-image){display:none!important}
+.objective-content .section-icon-remove{
+  top:-2px!important;
+  right:-2px!important;
+}
+.objective-input{
+  width:100%!important;
+  max-width:none!important;
+  flex:0 0 126px!important;
+  min-height:126px!important;
+  max-height:126px!important;
+  margin-top:auto!important;
+  border:3px solid #000!important;
+  border-radius:15px!important;
+  padding:12px 14px!important;
+  text-align:center!important;
+  resize:none!important;
+  background:#fff!important;
+  font-size:clamp(22px,2vw,34px)!important;
+  line-height:1.08!important;
+}
+/* Keep add/edit controls easy to see while editing. */
+body.edit-mode .list-edit-bar{display:flex!important;z-index:20!important}
+body.edit-mode #successList,body.edit-mode #reminderList{min-height:54px!important}
+body.edit-mode .step-row.is-blank,body.edit-mode .reminder-row.is-blank{display:grid!important}
+@media(max-width:900px){
+  .objective-content .section-icon-slot{width:100px!important;height:100px!important;flex-basis:100px!important}
+  .objective-input{flex-basis:100px!important;min-height:100px!important;max-height:100px!important;font-size:clamp(18px,1.7vw,27px)!important}
+}
+
+
+/* ---------- v28 footer safe area + fullscreen fallback ---------- */
+.board{padding-bottom:58px!important}
+.grade-switch,.utilities,.dashboard-nav{bottom:8px!important}
+.grade-switch{left:15px!important}
+.utilities{right:15px!important}
+.dashboard-nav{left:50%!important}
+.early-finisher-wrap{position:relative;z-index:2}
+body.presentation-mode{position:fixed;inset:0;width:100vw;height:100vh;overflow:hidden;background:#fff}
+body.presentation-mode .board{width:100vw;height:100vh}
+@media(max-width:900px){
+  .board{padding-bottom:50px!important}
+  .grade-switch,.utilities,.dashboard-nav{bottom:5px!important}
+  .grade-btn,.utility{height:27px!important;padding:0 8px!important;font-size:8px!important}
+  .dashboard-nav{padding:5px 9px!important;font-size:9px!important}
+}
+
+
+/* ===== v29 cache-busted footer / controls ===== */
+.board{
+  height:100vh !important;
+  padding:8px 8px 64px !important;
+}
+.grade-switch,.utilities,.dashboard-nav{
+  position:absolute !important;
+  bottom:9px !important;
+  z-index:200 !important;
+}
+.task{
+  overflow:hidden !important;
+}
+.early-finisher-wrap{
+  margin-bottom:0 !important;
+  min-height:42px !important;
+}
+body:not(.edit-mode) .early-finisher-wrap.is-empty{
+  display:none !important;
+}
+
+/* Nothing from the blue task panel may render underneath the footer controls. */
+.task::after{
+  content:"";
+  display:none;
+}
+
+/* Fallback "full screen" presentation mode when browser fullscreen API is blocked. */
+body.presentation-mode{
+  position:fixed !important;
+  inset:0 !important;
+  width:100vw !important;
+  height:100vh !important;
+  z-index:999999 !important;
+  background:#fff !important;
+}
+body.presentation-mode .board{
+  width:100vw !important;
+  height:100vh !important;
+}
+
+/* The two titles requested without extra icons. */
+.voice .panel-title,
+.bathroom .panel-title{
+  gap:0 !important;
+}
+
+@media(max-width:900px){
+  .board{padding-bottom:56px !important}
+}
+
+
+/* =========================================================
+   v31: fit without scrollbars + better list alignment
+   ========================================================= */
+
+/* Top yellow panel: slightly more breathing room and no internal scrollbars. */
+.learning{
+  padding:6px 8px !important;
+}
+.learning-grid{
+  grid-template-columns:minmax(330px,.95fr) 5px minmax(470px,1.55fr) !important;
+  gap:7px !important;
+}
+.learning-section{
+  overflow:hidden !important;
+}
+.learning-divider{
+  width:5px !important;
+  justify-self:center;
+}
+
+/* OBJECTIVE: image above, text box below, all contained inside panel. */
+.objective-section{
+  min-height:0 !important;
+}
+.objective-content{
+  flex:1 !important;
+  min-height:0 !important;
+  display:grid !important;
+  grid-template-rows:92px minmax(0,1fr) !important;
+  grid-template-columns:1fr !important;
+  gap:7px !important;
+  align-items:center !important;
+  justify-items:center !important;
+  padding:0 2px 4px !important;
+}
+.objective-content .section-icon-slot{
+  width:92px !important;
+  height:92px !important;
+  max-width:92px !important;
+  max-height:92px !important;
+  margin:0 auto !important;
+  border:0 !important;
+  background:transparent !important;
+  border-radius:0 !important;
+  overflow:visible !important;
+}
+.objective-content .section-icon-slot img{
+  width:92px !important;
+  height:92px !important;
+  object-fit:contain !important;
+  border-radius:0 !important;
+}
+.objective-input{
+  align-self:stretch !important;
+  justify-self:stretch !important;
+  width:100% !important;
+  height:100% !important;
+  min-height:0 !important;
+  max-height:none !important;
+  resize:none !important;
+  overflow:hidden !important;
+  padding:10px 12px 8px !important;
+  border-radius:15px !important;
+  text-align:center !important;
+  line-height:1.03 !important;
+  font-size:clamp(18px,1.45vw,25px) !important;
+}
+
+/* Success Criteria: everything must fit in the box; no scrollbar. */
+.success-section{
+  min-height:0 !important;
+}
+.success-content{
+  flex:1 !important;
+  min-height:0 !important;
+  overflow:hidden !important;
+}
+.success-list{
+  height:100% !important;
+  min-height:0 !important;
+  display:grid !important;
+  gap:6px !important;
+  overflow:hidden !important;
+  padding:0 1px 3px !important;
+}
+.success-list[data-count="1"]{grid-template-rows:1fr}
+.success-list[data-count="2"]{grid-template-rows:repeat(2,1fr)}
+.success-list[data-count="3"]{grid-template-rows:repeat(3,1fr)}
+.success-list[data-count="4"]{grid-template-rows:repeat(4,1fr)}
+.success-list[data-count="5"]{grid-template-rows:repeat(5,1fr)}
+.success-list[data-count="6"]{grid-template-rows:repeat(6,1fr)}
+.success-list .step-row{
+  min-height:0 !important;
+  height:auto !important;
+  grid-template-columns:28px minmax(0,1fr) 24px !important;
+  gap:5px !important;
+  padding:3px 6px !important;
+  border-radius:11px !important;
+  overflow:hidden !important;
+}
+.success-list .list-marker{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  align-self:stretch !important;
+  height:100% !important;
+  font-size:clamp(18px,1.15vw,23px) !important;
+  line-height:1 !important;
+}
+.success-list .step-text{
+  width:100% !important;
+  height:100% !important;
+  min-height:0 !important;
+  max-height:none !important;
+  overflow:hidden !important;
+  resize:none !important;
+  padding:5px 4px 2px !important;
+  line-height:1.02 !important;
+  font-size:clamp(13px,1.05vw,18px) !important;
+  text-align:left !important;
+  direction:ltr !important;
+}
+.success-list[data-count="4"] .step-text{font-size:clamp(12px,.95vw,16px) !important}
+.success-list[data-count="5"] .step-text,
+.success-list[data-count="6"] .step-text{font-size:clamp(10px,.83vw,14px) !important}
+
+/* STEPS: no scroll. Star centered with its text. Natural left-to-right typing. */
+.reminders{
+  overflow:hidden !important;
+}
+.reminder-list{
+  flex:1 !important;
+  min-height:0 !important;
+  height:100% !important;
+  display:grid !important;
+  gap:7px !important;
+  overflow:hidden !important;
+  padding:1px 3px 4px !important;
+}
+.reminder-list[data-count="1"]{grid-template-rows:1fr}
+.reminder-list[data-count="2"]{grid-template-rows:repeat(2,1fr)}
+.reminder-list[data-count="3"]{grid-template-rows:repeat(3,1fr)}
+.reminder-list[data-count="4"]{grid-template-rows:repeat(4,1fr)}
+.reminder-list[data-count="5"]{grid-template-rows:repeat(5,1fr)}
+.reminder-list .reminder-row{
+  min-height:0 !important;
+  height:auto !important;
+  grid-template-columns:28px 74px minmax(0,1fr) 24px !important;
+  gap:7px !important;
+  padding:4px 7px !important;
+  align-items:center !important;
+  overflow:hidden !important;
+}
+.reminder-list .reminder-row.no-image{
+  grid-template-columns:28px minmax(0,1fr) 24px !important;
+}
+.reminder-list .list-marker{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  align-self:stretch !important;
+  height:100% !important;
+  line-height:1 !important;
+  font-size:clamp(19px,1.25vw,25px) !important;
+}
+.reminder-pic-wrap,
+.reminder-pic{
+  width:68px !important;
+  height:68px !important;
+}
+.reminder-text{
+  width:100% !important;
+  height:100% !important;
+  min-height:0 !important;
+  max-height:none !important;
+  resize:none !important;
+  overflow:hidden !important;
+  white-space:pre-wrap !important;
+  overflow-wrap:break-word !important;
+  word-break:normal !important;
+  direction:ltr !important;
+  text-align:left !important;
+  line-height:1.05 !important;
+  letter-spacing:0 !important;
+  padding:7px 7px 3px !important;
+  font-size:clamp(16px,1.2vw,21px) !important;
+}
+.reminder-list[data-count="3"] .reminder-text{font-size:clamp(14px,1.05vw,18px) !important}
+.reminder-list[data-count="4"] .reminder-text,
+.reminder-list[data-count="5"] .reminder-text{font-size:clamp(11px,.9vw,16px) !important}
+.reminder-list[data-count="3"] .reminder-pic-wrap,
+.reminder-list[data-count="3"] .reminder-pic{width:56px !important;height:56px !important}
+.reminder-list[data-count="4"] .reminder-pic-wrap,
+.reminder-list[data-count="4"] .reminder-pic,
+.reminder-list[data-count="5"] .reminder-pic-wrap,
+.reminder-list[data-count="5"] .reminder-pic{width:46px !important;height:46px !important}
+
+/* Keep the edit controls from forcing scrolling. */
+.list-edit-bar{
+  flex:0 0 auto !important;
+}
+
+/* Countdown presets: tiny 2 x 4 button strip. */
+.countdown-panel{
+  padding:5px 7px 6px !important;
+  gap:3px !important;
+}
+.countdown-title{
+  font-size:clamp(20px,1.85vw,33px) !important;
+}
+.countdown-display{
+  width:94% !important;
+  font-size:clamp(34px,3.45vw,58px) !important;
+  padding:3px 3px 1px !important;
+}
+.period-presets{
+  width:92%;
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:2px;
+}
+.period-btn{
+  height:17px;
+  border:1.5px solid #000;
+  border-radius:999px;
+  padding:0 2px;
+  background:#fff;
+  color:#332B52;
+  font-family:"VAGTaskscreen",sans-serif;
+  font-size:8px;
+  line-height:1;
+  font-weight:900;
+}
+.period-btn.active{
+  background:#332B52;
+  color:#fff;
+}
+.end-time-input{
+  width:76% !important;
+  padding:1px 7px !important;
+  font-size:10px !important;
+  min-height:18px !important;
+  height:21px !important;
+}
+
+/* The little arrows/scrollbars should never appear in the learning/steps text. */
+.objective-input,
+.step-text,
+.reminder-text,
+.success-list,
+.reminder-list{
+  scrollbar-width:none !important;
+}
+.objective-input::-webkit-scrollbar,
+.step-text::-webkit-scrollbar,
+.reminder-text::-webkit-scrollbar,
+.success-list::-webkit-scrollbar,
+.reminder-list::-webkit-scrollbar{
+  display:none !important;
+}
+
+/* Small overall fit cleanup. */
+.panel-title,.learning-title{
+  margin:0 !important;
+}
+.task-sub{
+  overflow:hidden !important;
+  white-space:normal !important;
+}
+
+
+/* =========================================================
+   v32 — circular class timers + sane editing controls
+   ========================================================= */
+
+/* Objective-specific edit controls float in the objective section only. */
+.objective-content{
+  position:relative !important;
+}
+.objective-text-tools{
+  position:absolute;
+  right:4px;
+  bottom:5px;
+  z-index:30;
+  align-items:center;
+  gap:3px;
+  background:rgba(255,255,255,.96);
+  border:2px solid #000;
+  border-radius:999px;
+  padding:2px 4px;
+}
+.objective-text-tools span{
+  font-size:7px;
+  color:#000;
+}
+.objective-text-tools button{
+  width:27px;
+  height:22px;
+  border:1.5px solid #000;
+  border-radius:999px;
+  background:#fff;
+  padding:0;
+  font-size:9px;
+}
+
+/* Circular period buttons, visually matching Voice Level. */
+.period-presets{
+  width:auto !important;
+  display:grid !important;
+  grid-template-columns:repeat(4,24px) !important;
+  grid-template-rows:repeat(2,24px) !important;
+  gap:3px 5px !important;
+  justify-content:center !important;
+  align-content:center !important;
+}
+.period-btn{
+  width:24px !important;
+  height:24px !important;
+  min-width:24px !important;
+  padding:0 !important;
+  border:2px solid #000 !important;
+  border-radius:50% !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  font-family:"VAGTaskscreen",sans-serif !important;
+  font-size:8px !important;
+  font-weight:900 !important;
+  line-height:1 !important;
+  color:#fff !important;
+  -webkit-text-stroke:.25px #000;
+  paint-order:stroke fill;
+  box-shadow:none !important;
+}
+.period-btn.period-second{
+  background:#22B8F4 !important;
+}
+.period-btn.period-first{
+  background:#7618CF !important;
+}
+.period-btn.active{
+  box-shadow:inset 0 0 0 2px #fff,0 2px 0 rgba(0,0,0,.2) !important;
+  transform:scale(1.12);
+}
+
+/* Success/Steps bullets and stars are centered on the actual row text block. */
+.success-list .list-marker,
+.reminder-list .list-marker{
+  align-self:center !important;
+  height:auto !important;
+  min-height:0 !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  line-height:1 !important;
+  margin:0 !important;
+}
+
+/* Critical edit-layout fix:
+   keep the picture column present while editing, even when it has no image.
+   The previous 3-column no-image rule was squeezing the textarea into an auto column. */
+body.edit-mode .reminder-list .reminder-row,
+body.edit-mode .reminder-list .reminder-row.no-image{
+  grid-template-columns:28px 58px minmax(0,1fr) 28px !important;
+  gap:7px !important;
+  align-items:center !important;
+}
+body.edit-mode .reminder-pic-wrap{
+  width:54px !important;
+  height:54px !important;
+  display:block !important;
+}
+body.edit-mode .reminder-text{
+  width:100% !important;
+  min-width:0 !important;
+  height:auto !important;
+  min-height:48px !important;
+  max-height:58px !important;
+  padding:7px 8px 4px !important;
+  text-align:left !important;
+  direction:ltr !important;
+  white-space:pre-wrap !important;
+  word-break:normal !important;
+  overflow-wrap:break-word !important;
+  overflow:hidden !important;
+}
+body.edit-mode .reminder-remove{
+  align-self:center !important;
+  justify-self:center !important;
+}
+
+/* Outside edit mode an unused picture slot disappears cleanly. */
+body:not(.edit-mode) .reminder-list .reminder-row.no-image{
+  grid-template-columns:28px minmax(0,1fr) !important;
+}
+body:not(.edit-mode) .reminder-list .reminder-row.no-image .reminder-pic-wrap{
+  display:none !important;
+}
+
+/* Keep criteria editing natural too. */
+body.edit-mode .success-list .step-row{
+  grid-template-columns:28px minmax(0,1fr) 28px !important;
+  align-items:center !important;
+}
+body.edit-mode .success-list .step-text{
+  min-width:0 !important;
+  text-align:left !important;
+  direction:ltr !important;
+  overflow:hidden !important;
+}
+
+/* Give the green edit bar a little breathing room without crushing rows. */
+body.edit-mode .reminder-list{
+  padding-bottom:2px !important;
+}
+body.edit-mode .reminders .list-edit-bar{
+  margin-top:3px !important;
+}
+
+/* Make body-text controls more obvious. */
+.panel-tools span{
+  font-weight:900 !important;
+}
+
+
+/* ============================================================
+   v33 — PROJECTOR-FIRST LAYOUT
+   ============================================================ */
+
+/* TIME LEFT gets more width; VOICE gets less. */
+.countdown-panel{
+  grid-column:8/11 !important;
+  grid-row:1/3 !important;
+}
+.voice{
+  grid-column:11/13 !important;
+  grid-row:1/3 !important;
+  padding:6px 6px 5px !important;
+}
+.voice .panel-title{
+  font-size:clamp(22px,1.9vw,35px) !important;
+}
+.voice-buttons{
+  gap:3px !important;
+  padding:5px 3px 6px !important;
+}
+.voice-btn{
+  font-size:clamp(16px,1.45vw,26px) !important;
+  border-width:2.5px !important;
+}
+.voice-label{
+  font-size:clamp(18px,1.65vw,30px) !important;
+  min-height:28px !important;
+}
+
+/* Right column: small Early Finishers, large Bathroom caller. */
+.reminders{
+  grid-column:8/13 !important;
+  grid-row:3/5 !important;
+  padding:5px 8px !important;
+  gap:3px !important;
+}
+.bathroom{
+  grid-column:8/13 !important;
+  grid-row:5/9 !important;
+  padding:7px 10px !important;
+}
+.reminders .panel-title{
+  font-size:clamp(23px,2.15vw,38px) !important;
+}
+.title-star-icon{
+  width:clamp(25px,2.2vw,40px);
+  height:auto;
+  object-fit:contain;
+}
+
+/* Early Finishers rows: image on the left if one exists; otherwise bullet. */
+.reminder-list{
+  gap:4px !important;
+}
+.reminder-row{
+  min-height:0 !important;
+  grid-template-columns:24px 54px minmax(0,1fr) 23px !important;
+  gap:5px !important;
+  padding:3px 6px !important;
+}
+.reminder-row.has-image .list-marker{
+  display:none !important;
+}
+.reminder-row.has-image{
+  grid-template-columns:54px minmax(0,1fr) 23px !important;
+}
+.reminder-row.no-image{
+  grid-template-columns:24px minmax(0,1fr) 23px !important;
+}
+.reminder-pic-wrap,
+.reminder-pic{
+  width:50px !important;
+  height:50px !important;
+}
+.reminder-text{
+  min-height:38px !important;
+  max-height:48px !important;
+  font-size:clamp(13px,1.05vw,18px) !important;
+  text-align:left !important;
+  direction:ltr !important;
+  padding:6px 6px 2px !important;
+}
+.reminder-list .list-marker{
+  align-self:center !important;
+  justify-self:center !important;
+  font-size:20px !important;
+}
+body:not(.edit-mode) .reminder-row.no-image .reminder-pic-wrap{
+  display:none !important;
+}
+/* In edit mode always show the picture-add square without crushing the text. */
+body.edit-mode .reminder-row,
+body.edit-mode .reminder-row.no-image{
+  grid-template-columns:24px 50px minmax(0,1fr) 23px !important;
+}
+body.edit-mode .reminder-row.has-image{
+  grid-template-columns:50px minmax(0,1fr) 23px !important;
+}
+body.edit-mode .reminder-row.has-image .list-marker{
+  display:none !important;
+}
+
+/* Bathroom: make the current called table readable from the back of the room. */
+.bathroom{
+  display:grid !important;
+  grid-template-rows:auto minmax(0,1fr) auto !important;
+}
+.bathroom-title{
+  font-size:clamp(30px,3vw,54px) !important;
+}
+.bathroom-current-zone{
+  padding:4px 7% 8px !important;
+}
+.bathroom-current{
+  width:100% !important;
+  max-width:none !important;
+  min-height:122px !important;
+  font-size:clamp(72px,7.2vw,128px) !important;
+  line-height:.82 !important;
+  border-width:5px !important;
+  border-radius:22px !important;
+}
+.table-btn{
+  height:39px !important;
+  font-size:clamp(10px,.88vw,15px) !important;
+}
+
+/* Blue task: directions on LEFT, media BIG on RIGHT. */
+.task{
+  grid-template-rows:auto minmax(0,1fr) !important;
+  gap:6px !important;
+}
+.task-content-grid{
+  min-height:0;
+  display:grid;
+  grid-template-columns:minmax(150px,22%) minmax(0,1fr);
+  gap:7px;
+}
+.task-sub{
+  width:100% !important;
+  height:100% !important;
+  min-height:0 !important;
+  max-height:none !important;
+  border:3px solid rgba(0,0,0,.28) !important;
+  border-radius:18px !important;
+  padding:12px 10px !important;
+  display:flex !important;
+  align-items:flex-start !important;
+  justify-content:flex-start !important;
+  text-align:left !important;
+  overflow:hidden !important;
+  font-size:clamp(17px,1.35vw,24px) !important;
+  line-height:1.05 !important;
+}
+.task-stage{
+  border-radius:18px !important;
+  min-height:0 !important;
+}
+.task-preview{
+  padding:5px !important;
+}
+.task-preview img,
+.task-preview video{
+  max-width:100% !important;
+  max-height:100% !important;
+  width:100% !important;
+  height:100% !important;
+  object-fit:contain !important;
+}
+.task-preview iframe{
+  width:100% !important;
+  height:100% !important;
+}
+
+/* Rectangular media editor, not a pill-heavy bar. */
+.task-editor{
+  left:6px !important;
+  right:6px !important;
+  top:6px !important;
+  border-radius:12px !important;
+  padding:6px !important;
+}
+.mode-row{
+  gap:4px !important;
+  margin-bottom:4px !important;
+}
+.mode-btn,
+.file-btn,
+.clear-task{
+  border-radius:8px !important;
+  padding:5px 8px !important;
+  font-size:9px !important;
+}
+.task-control input[type="url"],
+.task-control textarea{
+  border-radius:8px !important;
+}
+
+/* old blue Early Finisher strip is gone */
+.early-finisher-wrap{
+  display:none !important;
+}
+
+/* Footer remains clear of content. */
+.board{
+  padding-bottom:62px !important;
+}
+
+@media(max-width:1000px){
+  .task-content-grid{
+    grid-template-columns:minmax(125px,24%) minmax(0,1fr);
+  }
+  .bathroom-current{
+    min-height:90px !important;
+    font-size:clamp(52px,6vw,90px) !important;
+  }
+}
+
+
+/* ============================================================
+   v37 — stable projector layout / equal learning halves
+   ============================================================ */
+:root{--uniform-title-size:clamp(25px,2.15vw,40px)}
+
+/* Every major title begins at the same size. Per-panel A-/A+ can still override. */
+.panel-title,
+.learning-title,
+.task-title,
+.countdown-title,
+.voice .panel-title,
+.reminders .panel-title,
+.bathroom-title{
+  font-size:var(--uniform-title-size)!important;
+  line-height:1!important;
+}
+
+/* OBJECTIVE and SUCCESS CRITERIA are true equal halves. */
+.learning-grid{
+  grid-template-columns:minmax(0,1fr) 5px minmax(0,1fr)!important;
+  gap:7px!important;
+}
+.objective-section,.success-section{min-width:0!important;min-height:0!important;overflow:hidden!important}
+.objective-content{
+  flex:1!important;
+  min-height:0!important;
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) minmax(0,1.08fr)!important;
+  grid-template-rows:minmax(0,1fr)!important;
+  gap:8px!important;
+  padding:2px 3px 4px!important;
+  align-items:stretch!important;
+}
+.objective-content .section-icon-slot{
+  grid-column:1!important;
+  grid-row:1!important;
+  width:100%!important;
+  height:100%!important;
+  max-width:none!important;
+  max-height:none!important;
+  min-width:0!important;
+  min-height:0!important;
+  border:3px solid rgba(0,0,0,.32)!important;
+  border-radius:16px!important;
+  background:#fff!important;
+  overflow:hidden!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+}
+.objective-content .section-icon-slot img{
+  width:100%!important;
+  height:100%!important;
+  object-fit:contain!important;
+  padding:4px!important;
+}
+.objective-content .section-icon-placeholder{
+  font-size:clamp(12px,1vw,17px)!important;
+}
+.objective-input{
+  grid-column:2!important;
+  grid-row:1!important;
+  width:100%!important;
+  height:100%!important;
+  min-width:0!important;
+  min-height:0!important;
+  max-height:none!important;
+  overflow:hidden!important;
+  resize:none!important;
+  border:3px solid rgba(0,0,0,.32)!important;
+  border-radius:16px!important;
+  background:#fff!important;
+  padding:12px!important;
+  text-align:center!important;
+  line-height:1.04!important;
+}
+.objective-text-tools{right:6px!important;bottom:7px!important}
+
+/* Success markers stay centered against the actual text block. */
+.success-list .step-row{
+  align-items:stretch!important;
+  grid-template-columns:30px minmax(0,1fr) 25px!important;
+}
+.success-list .list-marker{
+  align-self:center!important;
+  justify-self:center!important;
+  display:grid!important;
+  place-items:center!important;
+  width:100%!important;
+  height:auto!important;
+  line-height:1!important;
+  margin:0!important;
+}
+.success-list .step-text{
+  align-self:stretch!important;
+  min-width:0!important;
+  min-height:0!important;
+  width:100%!important;
+  height:100%!important;
+  overflow:hidden!important;
+  resize:none!important;
+  text-align:left!important;
+  white-space:pre-wrap!important;
+}
+
+/* BLUE TASK: plain white directions box in Edit; Enter is a real new line. */
+.task-content-grid{
+  min-height:0!important;
+  grid-template-columns:minmax(170px,25%) minmax(0,1fr)!important;
+  gap:9px!important;
+}
+.task-sub{
+  box-sizing:border-box!important;
+  width:100%!important;
+  height:100%!important;
+  min-width:0!important;
+  min-height:0!important;
+  max-height:none!important;
+  resize:none!important;
+  overflow:hidden!important;
+  white-space:pre-wrap!important;
+  overflow-wrap:break-word!important;
+  word-break:normal!important;
+  text-align:left!important;
+  direction:ltr!important;
+  line-height:1.12!important;
+  border:3px solid rgba(0,0,0,.3)!important;
+  border-radius:16px!important;
+  padding:12px!important;
+  background:rgba(255,255,255,.82)!important;
+  color:#20202a!important;
+}
+body.edit-mode .task-sub{
+  background:#fff!important;
+  border-color:#000!important;
+  outline:none!important;
+}
+body:not(.edit-mode) .task-sub{
+  pointer-events:none!important;
+}
+.task-stage{
+  min-width:0!important;
+  min-height:0!important;
+  overflow:hidden!important;
+  background:#fff!important;
+}
+body.edit-mode .task-stage{
+  display:grid!important;
+  grid-template-rows:auto minmax(0,1fr)!important;
+}
+body.edit-mode .task-editor{
+  position:static!important;
+  width:100%!important;
+  max-width:none!important;
+  border-radius:0!important;
+  border:0!important;
+  border-bottom:2px solid #d8d8d8!important;
+  background:#fff!important;
+  box-shadow:none!important;
+  padding:6px!important;
+}
+body.edit-mode .task-preview{min-height:0!important;overflow:hidden!important}
+.task-preview img,.task-preview video,.task-preview iframe{
+  width:100%!important;
+  height:100%!important;
+  max-width:100%!important;
+  max-height:100%!important;
+  object-fit:contain!important;
+}
+
+/* EARLY FINISHERS: image slot is large on the LEFT, text gets the rest. */
+.reminders{overflow:hidden!important}
+.reminder-list{min-height:0!important;overflow:hidden!important}
+.reminder-row,
+body.edit-mode .reminder-row,
+body.edit-mode .reminder-row.no-image{
+  grid-template-columns:28px minmax(64px,30%) minmax(0,1fr) 24px!important;
+  gap:6px!important;
+  min-width:0!important;
+  min-height:0!important;
+  overflow:hidden!important;
+  align-items:center!important;
+}
+.reminder-row.has-image,
+body.edit-mode .reminder-row.has-image{
+  grid-template-columns:minmax(64px,30%) minmax(0,1fr) 24px!important;
+}
+.reminder-pic-wrap{
+  width:100%!important;
+  height:100%!important;
+  min-width:0!important;
+  min-height:48px!important;
+  max-height:84px!important;
+  overflow:hidden!important;
+  border-radius:12px!important;
+  background:#fff!important;
+}
+.reminder-pic{
+  width:100%!important;
+  height:100%!important;
+  max-width:100%!important;
+  max-height:100%!important;
+  object-fit:contain!important;
+}
+.reminder-text{
+  min-width:0!important;
+  min-height:0!important;
+  width:100%!important;
+  height:100%!important;
+  max-height:none!important;
+  resize:none!important;
+  overflow:hidden!important;
+  white-space:pre-wrap!important;
+  overflow-wrap:break-word!important;
+  text-align:left!important;
+  line-height:1.05!important;
+}
+.reminder-list .list-marker{
+  align-self:center!important;
+  justify-self:center!important;
+  display:grid!important;
+  place-items:center!important;
+  width:100%!important;
+  height:auto!important;
+}
+/* no picture in view: marker + text uses all available width */
+body:not(.edit-mode) .reminder-row.no-image{
+  grid-template-columns:28px minmax(0,1fr)!important;
+}
+body:not(.edit-mode) .reminder-row.no-image .reminder-pic-wrap,
+body:not(.edit-mode) .reminder-row.no-image .reminder-remove{display:none!important}
+
+/* Keep every panel's contents clipped inside its colored boundary. */
+.panel{overflow:hidden!important}
+.learning,.task,.reminders,.bathroom,.countdown-panel,.voice{min-width:0!important;min-height:0!important}
+
+/* Automatic full-viewport presentation layout. */
+html,body{width:100%;height:100%;overflow:hidden!important}
+body.presentation-mode{position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important}
+body.presentation-mode .board{position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important}
+
+/* v37 button-bar fit: keep every edit control fully inside its colored panel. */
+body.edit-mode .panel-tools{
+  right:4px!important;
+  top:4px!important;
+  max-width:calc(100% - 8px)!important;
+  gap:1px!important;
+  padding:1px 3px!important;
+  white-space:nowrap!important;
+  overflow:visible!important;
+}
+body.edit-mode .panel-tools span{font-size:6px!important}
+body.edit-mode .panel-tools button{
+  width:22px!important;
+  height:20px!important;
+  min-width:22px!important;
+  font-size:8px!important;
+}
+body.edit-mode .voice .panel-tools,
+body.edit-mode .reminders .panel-tools,
+body.edit-mode .bathroom .panel-tools{
+  transform:scale(.88)!important;
+  transform-origin:top right!important;
+}
+body.edit-mode .page-arrow{display:none!important}
+
+
+/* ============================================================
+   v38 — exact Bathrooms/Water icon beside flashing table name
+   ============================================================ */
+.bathroom-current-zone{
+  padding:4px 4% 8px !important;
+  min-height:0 !important;
+}
+
+.bathroom-current-layout{
+  width:100%;
+  height:100%;
+  min-height:0;
+  display:grid;
+  grid-template-columns:minmax(115px,28%) minmax(0,1fr);
+  gap:12px;
+  align-items:center;
+}
+
+.bathroom-current-icon-wrap{
+  min-width:0;
+  height:100%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+}
+
+.bathroom-current-icon{
+  display:block;
+  width:100%;
+  max-width:185px;
+  height:100%;
+  max-height:150px;
+  object-fit:contain;
+  object-position:center;
+}
+
+.bathroom-current{
+  width:100% !important;
+  max-width:none !important;
+  min-width:0 !important;
+  min-height:122px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  text-align:center !important;
+  font-size:clamp(68px,6.5vw,118px) !important;
+  line-height:.82 !important;
+  padding:4px 10px !important;
+  overflow:hidden !important;
+}
+
+/* Keep the called table large, but shift the visual weight to the right. */
+.bathroom-current:not(.is-empty){
+  margin-left:0 !important;
+}
+
+@media(max-width:1000px){
+  .bathroom-current-layout{
+    grid-template-columns:minmax(90px,26%) minmax(0,1fr);
+    gap:8px;
+  }
+  .bathroom-current-icon{
+    max-width:135px;
+    max-height:110px;
+  }
+  .bathroom-current{
+    min-height:90px !important;
+    font-size:clamp(50px,5.8vw,82px) !important;
+  }
+}
+
+
+/* ============================================================
+   v39 — notebook background + final projector refinements
+   ============================================================ */
+
+/* Composition-notebook print behind every dashboard panel. */
+html,body,.board{
+  background-color:#111 !important;
+  background-image:url("./notebook-bg.jpg") !important;
+  background-repeat:repeat !important;
+  background-size:300px 300px !important;
+}
+.board{background-position:center !important}
+
+/* TIMER: larger clock, all 8 presets on one line.
+   The manual time field is Edit-mode only. */
+.countdown-panel{
+  gap:4px !important;
+  padding:6px 8px !important;
+}
+.countdown-display{
+  width:95% !important;
+  min-height:74px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  font-size:clamp(44px,4.35vw,76px) !important;
+  line-height:.9 !important;
+}
+.period-presets{
+  width:100% !important;
+  display:grid !important;
+  grid-template-columns:repeat(8,27px) !important;
+  grid-template-rows:27px !important;
+  gap:4px !important;
+  justify-content:center !important;
+  align-items:center !important;
+}
+.period-btn{
+  width:27px !important;
+  height:27px !important;
+  min-width:27px !important;
+  font-size:8px !important;
+}
+.end-time-input{display:none !important}
+body.edit-mode .end-time-input{
+  display:block !important;
+  width:72% !important;
+  height:21px !important;
+  min-height:21px !important;
+  margin-top:0 !important;
+}
+
+/* VOICE: bigger wording, but selected number never leaves purple box. */
+.voice{
+  overflow:hidden !important;
+  padding:5px 6px 5px !important;
+}
+.voice-buttons{
+  overflow:hidden !important;
+  padding:8px 8px 7px !important;
+  margin-top:2px !important;
+  gap:3px !important;
+}
+.voice-btn{
+  font-size:clamp(18px,1.7vw,30px) !important;
+}
+.voice-btn.active{
+  transform:scale(1.15) !important;
+  animation:voicePulseSafe 1s ease-in-out infinite !important;
+  box-shadow:inset 0 0 0 3px #fff,0 3px 0 rgba(0,0,0,.18) !important;
+}
+.voice-label{
+  font-size:clamp(27px,2.35vw,43px) !important;
+  line-height:.88 !important;
+  min-height:38px !important;
+  padding:0 3px 2px !important;
+}
+@keyframes voicePulseSafe{
+  0%,100%{transform:scale(1.12);filter:brightness(1)}
+  50%{transform:scale(1.18);filter:brightness(1.08)}
+}
+
+/* BLUE TASK: MEDIA LEFT / DIRECTIONS RIGHT. */
+.task-content-grid{
+  grid-template-columns:minmax(0,68%) minmax(180px,32%) !important;
+  gap:9px !important;
+}
+.task-stage{
+  grid-column:1 !important;
+  grid-row:1 !important;
+}
+.task-sub{
+  grid-column:2 !important;
+  grid-row:1 !important;
+}
+.task-preview img,
+.task-preview video,
+.task-preview iframe{
+  object-fit:contain !important;
+}
+
+/* EARLY FINISHERS: one shared square media space on the left. */
+.reminders{
+  overflow:hidden !important;
+}
+.early-content-grid{
+  flex:1;
+  min-height:0;
+  display:grid;
+  grid-template-columns:minmax(108px,29%) minmax(0,1fr);
+  gap:8px;
+  overflow:hidden;
+}
+.early-media-slot{
+  position:relative;
+  min-width:0;
+  min-height:0;
+  aspect-ratio:1/1;
+  align-self:center;
+  justify-self:stretch;
+  max-height:100%;
+  border:3px solid rgba(0,0,0,.38);
+  border-radius:15px;
+  background:#fff;
+  overflow:hidden;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.early-media-placeholder{
+  text-align:center;
+  font-size:clamp(10px,.85vw,14px);
+  line-height:1.05;
+  color:#777;
+}
+body:not(.edit-mode) .early-media-slot:not(.has-media) .early-media-placeholder{
+  color:transparent;
+}
+.early-media-slot img,
+.early-media-slot video{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  background:#fff;
+}
+.early-media-slot video{object-position:center}
+.early-media-button{
+  position:absolute;
+  left:50%;
+  bottom:5px;
+  transform:translateX(-50%);
+  z-index:4;
+  border:2px solid #000;
+  border-radius:999px;
+  background:#fff;
+  padding:3px 8px;
+  font-size:8px;
+  font-weight:900;
+  white-space:nowrap;
+}
+.early-media-remove{
+  position:absolute;
+  top:4px;
+  right:4px;
+  z-index:5;
+  width:23px;
+  height:23px;
+  border:2px solid #000;
+  border-radius:50%;
+  background:#fff;
+  padding:0;
+  font-size:15px;
+  line-height:17px;
+  display:none;
+}
+body.edit-mode .early-media-slot.has-media .early-media-remove{display:block}
+.early-text-column{
+  min-width:0;
+  min-height:0;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+}
+.early-text-column .reminder-list{
+  flex:1;
+  min-height:0;
+  display:grid !important;
+  gap:5px !important;
+  overflow:hidden !important;
+}
+.reminder-row,
+body.edit-mode .reminder-row,
+body.edit-mode .reminder-row.no-image,
+body.edit-mode .reminder-row.has-image{
+  grid-template-columns:27px minmax(0,1fr) 24px !important;
+  gap:5px !important;
+  padding:3px 6px !important;
+  min-height:0 !important;
+  overflow:hidden !important;
+}
+.reminder-row .reminder-pic-wrap{display:none !important}
+.reminder-list .list-marker{
+  align-self:center !important;
+  justify-self:center !important;
+  display:grid !important;
+  place-items:center !important;
+}
+.reminder-text{
+  min-height:0 !important;
+  max-height:none !important;
+  width:100% !important;
+  height:100% !important;
+  overflow:hidden !important;
+  text-align:left !important;
+  padding:6px 5px 2px !important;
+}
+.reminder-list[data-count="1"]{grid-template-rows:minmax(0,1fr) !important}
+.reminder-list[data-count="2"]{grid-template-rows:repeat(2,minmax(0,1fr)) !important}
+.reminder-list[data-count="3"]{grid-template-rows:repeat(3,minmax(0,1fr)) !important}
+.reminder-list[data-count="4"]{grid-template-rows:repeat(4,minmax(0,1fr)) !important}
+.reminder-list[data-count="5"]{grid-template-rows:repeat(5,minmax(0,1fr)) !important}
+
+/* Bathroom stays WHITE until a table is actually selected. */
+.bathroom{
+  background:#fff;
+}
+
+/* Overlay pages live inside the Task Screen document.
+   Native fullscreen therefore remains active while switching pages. */
+.page-overlay{
+  position:fixed;
+  inset:0;
+  z-index:999999;
+  display:none;
+  background:#fff;
+}
+.page-overlay.active{display:block}
+.page-frame{
+  width:100%;
+  height:100%;
+  border:0;
+  display:none;
+  background:#fff;
+}
+.page-frame.active{display:block}
+
+/* Keep tiny footer controls legible against notebook print. */
+.grade-switch,.utilities,.dashboard-nav{
+  filter:drop-shadow(0 1px 2px rgba(255,255,255,.85));
+}
+
+@media(max-width:1100px){
+  .period-presets{
+    grid-template-columns:repeat(8,24px) !important;
+    grid-template-rows:24px !important;
+    gap:3px !important;
+  }
+  .period-btn{width:24px !important;height:24px !important;min-width:24px !important}
+  .early-content-grid{grid-template-columns:minmax(92px,27%) minmax(0,1fr)}
+}
+
+
+/* ============================================================
+   v41 — clean list rows + never crop uploaded media
+   ============================================================ */
+
+/* Lists never create tiny implicit grid rows. */
+.success-list,
+.reminder-list{
+  grid-auto-rows:minmax(0,1fr) !important;
+  align-content:stretch !important;
+  overflow:hidden !important;
+}
+.success-list .step-row,
+.reminder-list .reminder-row{
+  min-height:0 !important;
+  max-height:none !important;
+  overflow:hidden !important;
+}
+body.edit-mode .success-list .step-row.is-blank,
+body.edit-mode .reminder-list .reminder-row.is-blank{
+  display:grid !important;
+}
+
+/* Exact row counts used by the cleaned lists. */
+.success-list[data-count="1"],
+.reminder-list[data-count="1"]{grid-template-rows:minmax(0,1fr) !important}
+.success-list[data-count="2"],
+.reminder-list[data-count="2"]{grid-template-rows:repeat(2,minmax(0,1fr)) !important}
+.success-list[data-count="3"],
+.reminder-list[data-count="3"]{grid-template-rows:repeat(3,minmax(0,1fr)) !important}
+.success-list[data-count="4"],
+.reminder-list[data-count="4"]{grid-template-rows:repeat(4,minmax(0,1fr)) !important}
+.success-list[data-count="5"],
+.reminder-list[data-count="5"]{grid-template-rows:repeat(5,minmax(0,1fr)) !important}
+.success-list[data-count="6"],
+.reminder-list[data-count="6"]{grid-template-rows:repeat(6,minmax(0,1fr)) !important}
+
+/* Every uploaded picture/video is FIT INSIDE its assigned area.
+   Never crop just to fill a square/rectangle. */
+.section-icon-slot,
+.task-preview,
+.early-media-slot,
+.step-pic-wrap,
+.reminder-pic-wrap,
+.video-wrap,
+.steps-card{
+  overflow:hidden !important;
+}
+
+.section-icon-slot img,
+.task-preview img,
+.task-preview video,
+.early-media-slot img,
+.early-media-slot video,
+.step-pic,
+.reminder-pic,
+.video-wrap video,
+.steps-card img{
+  width:100% !important;
+  height:100% !important;
+  max-width:100% !important;
+  max-height:100% !important;
+  object-fit:contain !important;
+  object-position:center !important;
+}
+
+/* Images should not stretch beyond their natural aspect ratio. */
+.task-preview img,
+.section-icon-slot img,
+.early-media-slot img,
+.step-pic,
+.reminder-pic,
+.steps-card img{
+  background:transparent !important;
+}
+
+/* Uploaded video gets letterboxing when needed rather than clipping. */
+.task-preview video,
+.early-media-slot video,
+.video-wrap video{
+  background:#000 !important;
+}
+
+
+/* ============================================================
+   v42 — stable editable boxes / task steps / media fitting
+   ============================================================ */
+
+/* OBJECTIVE: left media + right text, equal visual weight. */
+.objective-content{
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr) !important;
+  grid-template-rows:minmax(0,1fr) !important;
+  gap:8px !important;
+  align-items:stretch !important;
+  min-height:0 !important;
+}
+.objective-content .section-icon-slot{
+  width:100% !important;
+  height:100% !important;
+  max-width:none !important;
+  max-height:none !important;
+  min-width:0 !important;
+  min-height:0 !important;
+  aspect-ratio:auto !important;
+  align-self:stretch !important;
+}
+.objective-input{
+  width:100% !important;
+  height:100% !important;
+  min-width:0 !important;
+  min-height:0 !important;
+  max-height:none !important;
+  resize:none !important;
+  overflow:hidden !important;
+  text-align:center !important;
+  padding:14px !important;
+}
+body:not(.edit-mode) .objective-content:not(.has-objective-image){
+  grid-template-columns:1fr !important;
+}
+body:not(.edit-mode) .objective-content:not(.has-objective-image) .objective-input{
+  grid-column:1 !important;
+}
+
+/* SUCCESS + EARLY FINISHERS:
+   one item = one large box; N items = N equal boxes. */
+.success-list,
+.reminder-list,
+.task-step-list{
+  display:grid !important;
+  gap:7px !important;
+  min-height:0 !important;
+  height:100% !important;
+  overflow:hidden !important;
+  grid-auto-flow:row !important;
+  grid-auto-rows:minmax(0,1fr) !important;
+}
+.success-list[data-count="1"],
+.reminder-list[data-count="1"],
+.task-step-list[data-count="1"]{grid-template-rows:minmax(0,1fr) !important}
+.success-list[data-count="2"],
+.reminder-list[data-count="2"],
+.task-step-list[data-count="2"]{grid-template-rows:repeat(2,minmax(0,1fr)) !important}
+.success-list[data-count="3"],
+.reminder-list[data-count="3"],
+.task-step-list[data-count="3"]{grid-template-rows:repeat(3,minmax(0,1fr)) !important}
+.success-list[data-count="4"],
+.reminder-list[data-count="4"],
+.task-step-list[data-count="4"]{grid-template-rows:repeat(4,minmax(0,1fr)) !important}
+.success-list[data-count="5"],
+.reminder-list[data-count="5"],
+.task-step-list[data-count="5"]{grid-template-rows:repeat(5,minmax(0,1fr)) !important}
+.success-list[data-count="6"],
+.reminder-list[data-count="6"],
+.task-step-list[data-count="6"]{grid-template-rows:repeat(6,minmax(0,1fr)) !important}
+.task-step-list[data-count="7"]{grid-template-rows:repeat(7,minmax(0,1fr)) !important}
+.task-step-list[data-count="8"]{grid-template-rows:repeat(8,minmax(0,1fr)) !important}
+
+.success-list .step-row,
+.reminder-list .reminder-row,
+.task-step-row{
+  min-height:0 !important;
+  height:auto !important;
+  max-height:none !important;
+  overflow:hidden !important;
+  align-items:center !important;
+}
+.success-list .step-text,
+.reminder-list .reminder-text,
+.task-step-text{
+  width:100% !important;
+  min-width:0 !important;
+  height:100% !important;
+  min-height:0 !important;
+  max-height:none !important;
+  resize:none !important;
+  overflow:hidden !important;
+  white-space:pre-wrap !important;
+  overflow-wrap:break-word !important;
+  word-break:normal !important;
+  direction:ltr !important;
+  writing-mode:horizontal-tb !important;
+  text-align:left !important;
+  line-height:1.08 !important;
+  padding:10px 9px 6px !important;
+}
+.success-list[data-count="1"] .step-text,
+.reminder-list[data-count="1"] .reminder-text,
+.task-step-list[data-count="1"] .task-step-text{
+  font-size:clamp(20px,1.65vw,30px) !important;
+  padding:18px 14px !important;
+}
+
+/* EARLY FINISHERS text column remains wide/readable. */
+.early-text-column{
+  min-width:0 !important;
+}
+.reminder-row,
+body.edit-mode .reminder-row,
+body.edit-mode .reminder-row.no-image,
+body.edit-mode .reminder-row.has-image{
+  grid-template-columns:30px minmax(0,1fr) 28px !important;
+}
+.reminder-text{
+  font-size:clamp(17px,1.25vw,23px) !important;
+}
+
+/* TASK OF THE DAY:
+   shared media stays on the LEFT; addable direction boxes on the RIGHT. */
+.task-content-grid{
+  grid-template-columns:minmax(0,66%) minmax(210px,34%) !important;
+  gap:9px !important;
+}
+.task-stage{
+  grid-column:1 !important;
+  grid-row:1 !important;
+  min-height:0 !important;
+}
+.task-instruction-column{
+  grid-column:2 !important;
+  grid-row:1 !important;
+  min-width:0;
+  min-height:0;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  overflow:hidden;
+}
+.task-step-list{
+  flex:1;
+}
+.task-step-row{
+  position:relative;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 28px;
+  gap:5px;
+  border:2px solid rgba(0,0,0,.35);
+  border-radius:15px;
+  background:#fff;
+  padding:4px 5px;
+}
+.task-step-text{
+  border:0 !important;
+  background:transparent !important;
+  font-family:"VAGTaskscreen",sans-serif !important;
+  color:#173d61 !important;
+}
+.task-step-remove{
+  width:24px;
+  height:24px;
+  align-self:center;
+  justify-self:center;
+  border:2px solid #000;
+  border-radius:50%;
+  background:#fff;
+  font-weight:900;
+  padding:0;
+  line-height:18px;
+}
+body:not(.edit-mode) .task-step-remove{display:none}
+.task-step-edit-bar{
+  flex:0 0 auto;
+  justify-content:center;
+  align-items:center;
+}
+.add-task-step{
+  border:2px solid #000;
+  border-radius:999px;
+  background:#fff;
+  padding:5px 13px;
+  font-family:"VAGTaskscreen",sans-serif;
+  font-weight:900;
+}
+body.edit-mode .task-step-row{
+  background:#fff !important;
+}
+
+/* When the Task has only one instruction, make it the full-height focal box. */
+.task-step-list[data-count="1"] .task-step-row{
+  align-self:stretch;
+}
+
+/* All uploaded image/video/GIF content FITS. Never crop. */
+.section-icon-slot img,
+.task-preview img,
+.task-preview video,
+.early-media-slot img,
+.early-media-slot video,
+.video-wrap video,
+.steps-card img{
+  width:100% !important;
+  height:100% !important;
+  max-width:100% !important;
+  max-height:100% !important;
+  object-fit:contain !important;
+  object-position:center !important;
+}
+.task-preview,
+.early-media-slot,
+.section-icon-slot{
+  overflow:hidden !important;
+}
+
+/* Manual time chooser still only exists in Edit mode. */
+.end-time-input{display:none !important}
+body.edit-mode .end-time-input{display:block !important}
+
+
+/* ============================================================
+   v45 — headings over text columns + uniform multi-step text
+   ============================================================ */
+
+/* These three panels use the same visual rule:
+   FULL-HEIGHT MEDIA LEFT / HEADING + TEXT RIGHT. */
+.objective-section,
+.task,
+.reminders{
+  min-height:0 !important;
+  overflow:hidden !important;
+}
+
+/* ---------------- OBJECTIVE ---------------- */
+.objective-content{
+  width:100% !important;
+  height:100% !important;
+  min-height:0 !important;
+  display:grid !important;
+  grid-template-columns:minmax(0,48%) minmax(0,52%) !important;
+  grid-template-rows:minmax(0,1fr) !important;
+  gap:8px !important;
+  align-items:stretch !important;
+}
+.objective-content .section-icon-slot{
+  grid-column:1 !important;
+  grid-row:1 !important;
+  width:100% !important;
+  height:100% !important;
+  min-width:0 !important;
+  min-height:0 !important;
+  max-width:none !important;
+  max-height:none !important;
+  margin:0 !important;
+  align-self:stretch !important;
+  border-radius:15px !important;
+}
+.objective-text-column{
+  grid-column:2 !important;
+  grid-row:1 !important;
+  min-width:0 !important;
+  min-height:0 !important;
+  display:grid !important;
+  grid-template-rows:auto minmax(0,1fr) !important;
+  gap:6px !important;
+  position:relative !important;
+  overflow:hidden !important;
+}
+.objective-title{
+  width:100% !important;
+  justify-content:center !important;
+  text-align:center !important;
+  margin:0 !important;
+  min-height:0 !important;
+}
+.objective-input{
+  width:100% !important;
+  height:100% !important;
+  min-width:0 !important;
+  min-height:0 !important;
+  max-height:none !important;
+  align-self:stretch !important;
+}
+body:not(.edit-mode) .objective-content:not(.has-objective-image){
+  grid-template-columns:1fr !important;
+}
+body:not(.edit-mode) .objective-content:not(.has-objective-image) .section-icon-slot{
+  display:none !important;
+}
+body:not(.edit-mode) .objective-content:not(.has-objective-image) .objective-text-column{
+  grid-column:1 !important;
+}
+
+/* ---------------- TASK OF THE DAY ---------------- */
+.task{
+  grid-template-rows:minmax(0,1fr) !important;
+}
+.task-content-grid{
+  width:100% !important;
+  height:100% !important;
+  min-height:0 !important;
+  grid-template-columns:minmax(0,66%) minmax(220px,34%) !important;
+  grid-template-rows:minmax(0,1fr) !important;
+  gap:9px !important;
+}
+.task-stage{
+  grid-column:1 !important;
+  grid-row:1 !important;
+  height:100% !important;
+  min-height:0 !important;
+  align-self:stretch !important;
+}
+.task-instruction-column{
+  grid-column:2 !important;
+  grid-row:1 !important;
+  min-width:0 !important;
+  min-height:0 !important;
+  display:grid !important;
+  grid-template-rows:auto minmax(0,1fr) auto !important;
+  gap:6px !important;
+  overflow:hidden !important;
+}
+.task-title{
+  width:100% !important;
+  justify-content:center !important;
+  text-align:center !important;
+  margin:0 !important;
+  font-size:clamp(25px,2.55vw,47px) !important;
+}
+.task-star-img{
+  width:1em !important;
+  max-height:1em !important;
+}
+.task-step-list{
+  min-height:0 !important;
+  height:100% !important;
+}
+
+/* ---------------- EARLY FINISHERS ---------------- */
+.reminders{
+  display:block !important;
+  padding:7px 9px !important;
+}
+.early-content-grid{
+  width:100% !important;
+  height:100% !important;
+  min-height:0 !important;
+  display:grid !important;
+  grid-template-columns:minmax(105px,34%) minmax(0,66%) !important;
+  grid-template-rows:minmax(0,1fr) !important;
+  gap:8px !important;
+  align-items:stretch !important;
+  overflow:hidden !important;
+}
+.early-media-slot{
+  grid-column:1 !important;
+  grid-row:1 !important;
+  width:100% !important;
+  height:100% !important;
+  min-width:0 !important;
+  min-height:0 !important;
+  max-width:none !important;
+  max-height:none !important;
+  aspect-ratio:auto !important;
+  align-self:stretch !important;
+  justify-self:stretch !important;
+  border-radius:15px !important;
+}
+.early-text-column{
+  grid-column:2 !important;
+  grid-row:1 !important;
+  min-width:0 !important;
+  min-height:0 !important;
+  height:100% !important;
+  display:grid !important;
+  grid-template-rows:auto minmax(0,1fr) auto !important;
+  gap:6px !important;
+  overflow:hidden !important;
+}
+.early-title{
+  width:100% !important;
+  justify-content:center !important;
+  text-align:center !important;
+  margin:0 !important;
+  font-size:clamp(25px,2.55vw,47px) !important;
+}
+.title-star-icon{
+  width:1em !important;
+  height:1em !important;
+}
+.reminder-list{
+  min-height:0 !important;
+  height:100% !important;
+}
+
+/* ---------------- UNIFORM STEP TEXT ----------------
+   Number of rows changes BOX height, not font size. */
+.success-list .step-text,
+.reminder-list .reminder-text,
+.task-step-list .task-step-text{
+  font-size:clamp(17px,1.25vw,22px) !important;
+  line-height:1.08 !important;
+  padding:9px 8px 6px !important;
+}
+
+/* Kill every older count-specific size override. */
+.success-list[data-count="1"] .step-text,
+.success-list[data-count="2"] .step-text,
+.success-list[data-count="3"] .step-text,
+.success-list[data-count="4"] .step-text,
+.success-list[data-count="5"] .step-text,
+.success-list[data-count="6"] .step-text,
+.reminder-list[data-count="1"] .reminder-text,
+.reminder-list[data-count="2"] .reminder-text,
+.reminder-list[data-count="3"] .reminder-text,
+.reminder-list[data-count="4"] .reminder-text,
+.reminder-list[data-count="5"] .reminder-text,
+.reminder-list[data-count="6"] .reminder-text,
+.task-step-list[data-count="1"] .task-step-text,
+.task-step-list[data-count="2"] .task-step-text,
+.task-step-list[data-count="3"] .task-step-text,
+.task-step-list[data-count="4"] .task-step-text,
+.task-step-list[data-count="5"] .task-step-text,
+.task-step-list[data-count="6"] .task-step-text,
+.task-step-list[data-count="7"] .task-step-text,
+.task-step-list[data-count="8"] .task-step-text{
+  font-size:clamp(17px,1.25vw,22px) !important;
+  padding:9px 8px 6px !important;
+}
+
+/* Row text remains vertically centered with its marker. */
+.success-list .step-row,
+.reminder-list .reminder-row,
+.task-step-row{
+  align-items:center !important;
+}
+.success-list .list-marker,
+.reminder-list .list-marker{
+  align-self:center !important;
+  justify-self:center !important;
+}
+
+/* Media always uses every available pixel WITHOUT cropping. */
+.objective-content .section-icon-slot img,
+.task-preview img,
+.task-preview video,
+.early-media-slot img,
+.early-media-slot video{
+  width:100% !important;
+  height:100% !important;
+  max-width:100% !important;
+  max-height:100% !important;
+  object-fit:contain !important;
+  object-position:center !important;
+}
+
+@media(max-width:1000px){
+  .objective-content{
+    grid-template-columns:minmax(0,46%) minmax(0,54%) !important;
+  }
+  .task-content-grid{
+    grid-template-columns:minmax(0,62%) minmax(210px,38%) !important;
+  }
+  .early-content-grid{
+    grid-template-columns:minmax(95px,32%) minmax(0,68%) !important;
+  }
+}
+
+
+/* ============================================================
+   v46 — selected-text colors/underline + 3-slot Early Finishers
+   ============================================================ */
+.rich-editor{
+  outline:none !important;
+  white-space:pre-wrap !important;
+  overflow-wrap:break-word !important;
+  word-break:normal !important;
+  writing-mode:horizontal-tb !important;
+}
+body.edit-mode .rich-editor{cursor:text}
+body.edit-mode .rich-editor:empty::before{
+  content:attr(data-placeholder);
+  color:#7b7b7b;
+  opacity:.85;
+  pointer-events:none;
+}
+
+.rich-format-toolbar{
+  position:absolute;
+  left:50%;
+  bottom:47px;
+  transform:translateX(-50%);
+  z-index:600;
+  align-items:center;
+  gap:4px;
+  padding:4px 7px;
+  border:2px solid #000;
+  border-radius:999px;
+  background:#fff;
+  box-shadow:0 2px 6px #0002;
+  white-space:nowrap;
+}
+.rich-format-toolbar>span{
+  font-family:"VAGTaskscreen",sans-serif;
+  font-size:8px;
+  font-weight:900;
+}
+.rich-underline,.rich-color{
+  width:27px;height:27px;
+  border:2px solid #000;
+  border-radius:50%;
+  padding:0;
+}
+.rich-underline{
+  background:#fff;
+  font:900 12px/1 "VAGTaskscreen",sans-serif;
+}
+.rich-color{background:var(--rich-color)}
+.rich-color:hover,.rich-underline:hover{transform:scale(1.08)}
+
+.objective-check-icon{
+  width:1em !important;
+  height:1em !important;
+  flex:0 0 auto;
+}
+.objective-input{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  flex-direction:column !important;
+  white-space:pre-wrap !important;
+}
+body.edit-mode .objective-input{
+  align-items:flex-start !important;
+  justify-content:center !important;
+}
+
+/* Early Finishers: exactly 3 centered edit boxes; blank ones hide in view. */
+.early-three-list{
+  min-height:0 !important;
+  height:100% !important;
+  display:grid !important;
+  gap:7px !important;
+  overflow:hidden !important;
+}
+.early-three-list[data-count="1"]{grid-template-rows:minmax(0,1fr) !important}
+.early-three-list[data-count="2"]{grid-template-rows:repeat(2,minmax(0,1fr)) !important}
+.early-three-list[data-count="3"]{grid-template-rows:repeat(3,minmax(0,1fr)) !important}
+
+.early-three-row,
+body.edit-mode .early-three-row{
+  min-height:0 !important;
+  height:auto !important;
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) 28px !important;
+  align-items:center !important;
+  gap:5px !important;
+  padding:5px 7px !important;
+  border:2px solid rgba(0,0,0,.18) !important;
+  border-radius:14px !important;
+  background:#fff !important;
+  overflow:hidden !important;
+}
+.early-three-row .reminder-text{
+  width:100% !important;
+  height:100% !important;
+  min-height:0 !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  text-align:center !important;
+  padding:8px !important;
+  color:#173d61;
+  overflow:hidden !important;
+}
+body:not(.edit-mode) .early-three-row .reminder-remove{display:none !important}
+.early-three-row .list-marker,
+.early-three-row .reminder-pic-wrap{display:none !important}
+
+.step-text.rich-editor,
+.task-step-text.rich-editor{
+  display:flex !important;
+  align-items:center !important;
+}
+.step-text.rich-editor{justify-content:flex-start !important}
+.task-step-text.rich-editor{justify-content:center !important}
+
+.rich-editor span,.rich-editor u{
+  font-size:inherit;
+  line-height:inherit;
+}
+
+@media(max-width:1000px){
+  .rich-format-toolbar{
+    bottom:43px;
+    gap:3px;
+    padding:3px 5px;
+  }
+  .rich-color,.rich-underline{width:23px;height:23px}
+}
+
+
+/* ============================================================
+   v47 — readability / panel swap / reliable controls
+   ============================================================ */
+
+/* REMOVE the composition-notebook background completely. */
+html,body,.board{
+  background:#fff !important;
+  background-image:none !important;
+  background-repeat:no-repeat !important;
+}
+
+/* Swap the right-column heights:
+   EARLY FINISHERS gets the large former Bathroom area.
+   BATHROOM + WATER gets the smaller former Early Finishers area. */
+.reminders{
+  grid-column:8/13 !important;
+  grid-row:3/7 !important;
+  padding:7px 9px !important;
+}
+.bathroom{
+  grid-column:8/13 !important;
+  grid-row:7/9 !important;
+  padding:4px 7px !important;
+}
+
+/* Early Finishers can breathe now. */
+.early-content-grid{
+  height:100% !important;
+  grid-template-columns:minmax(150px,32%) minmax(0,68%) !important;
+  gap:9px !important;
+}
+.early-media-slot{
+  min-height:0 !important;
+  height:100% !important;
+}
+.early-title{
+  font-size:clamp(24px,2.25vw,42px) !important;
+}
+.early-three-row .reminder-text{
+  font-size:clamp(18px,1.4vw,25px) !important;
+}
+
+/* Compact Bathroom + Water for its shorter panel while keeping called-table
+   text large enough to see across the room. */
+.bathroom-title{
+  font-size:clamp(22px,1.85vw,34px) !important;
+  line-height:.9 !important;
+  margin:0 !important;
+}
+.bathroom{
+  display:grid !important;
+  grid-template-rows:auto minmax(0,1fr) auto !important;
+  gap:3px !important;
+  overflow:hidden !important;
+}
+.bathroom-current-zone{
+  padding:0 2% 2px !important;
+  min-height:0 !important;
+}
+.bathroom-current-layout{
+  min-height:0 !important;
+  grid-template-columns:minmax(72px,22%) minmax(0,1fr) !important;
+  gap:7px !important;
+}
+.bathroom-current-icon{
+  max-width:105px !important;
+  max-height:80px !important;
+}
+.bathroom-current{
+  min-height:62px !important;
+  height:100% !important;
+  font-size:clamp(38px,4vw,68px) !important;
+  line-height:.82 !important;
+  border-width:4px !important;
+  border-radius:16px !important;
+}
+.table-buttons{
+  gap:4px !important;
+}
+.table-btn{
+  height:27px !important;
+  font-size:9px !important;
+}
+.bathroom-actions button{
+  font-size:7px !important;
+  padding:3px 5px !important;
+}
+
+/* OBJECTIVE heading must stay INSIDE the narrow right-hand yellow text area. */
+.objective-title{
+  width:100% !important;
+  max-width:100% !important;
+  min-width:0 !important;
+  overflow:hidden !important;
+  white-space:nowrap !important;
+  font-size:clamp(15px,1.1vw,21px) !important;
+  letter-spacing:-.035em !important;
+  line-height:1 !important;
+  gap:3px !important;
+}
+.objective-title .objective-check-icon{
+  width:.92em !important;
+  height:.92em !important;
+  flex:0 0 .92em !important;
+}
+.objective-title span{
+  min-width:0 !important;
+  white-space:nowrap !important;
+}
+
+/* Bottom controls must always be clickable above other UI. */
+.utilities{
+  z-index:1200 !important;
+  pointer-events:auto !important;
+}
+.utility,.save-status{
+  pointer-events:auto !important;
+  cursor:pointer !important;
+  user-select:none !important;
+}
+#editToggle{
+  position:relative !important;
+  z-index:1201 !important;
+}
+#saveStatus{
+  position:relative !important;
+  z-index:1201 !important;
+  border:1.5px solid #777 !important;
+  background:#fff !important;
+  min-width:48px !important;
+}
+#saveStatus.saving{
+  background:#fff3ad !important;
+}
+#saveStatus.save-failed{
+  background:#ffd5e7 !important;
+  color:#8a0038 !important;
+  border-color:#8a0038 !important;
+}
+
+/* With the busy notebook print gone, don't add extra footer shadows. */
+.grade-switch,.utilities,.dashboard-nav{
+  filter:none !important;
+}
+
+@media(max-width:1000px){
+  .objective-title{
+    font-size:clamp(14px,1.05vw,18px) !important;
+  }
+  .bathroom-current{
+    min-height:52px !important;
+    font-size:clamp(32px,3.5vw,54px) !important;
+  }
+  .bathroom-current-icon{
+    max-width:86px !important;
+    max-height:66px !important;
+  }
+}
+
+
+/* v50 verified media upload status */
+#saveStatus.media-saved{
+  background:#D9EFCF !important;
+  color:#245c0c !important;
+  border-color:#56A328 !important;
+}
+
+
+/* ============================================================
+   v51 — objective title alignment / 3-across Early Finishers /
+   stronger contained Voice Level selection
+   ============================================================ */
+
+/* OBJECTIVE:
+   image owns the full LEFT half.
+   OBJECTIVE heading is centered over the RIGHT text half,
+   entirely to the right of the yellow center divider. */
+.objective-content{
+  grid-template-columns:minmax(0,50%) minmax(0,50%) !important;
+  gap:8px !important;
+}
+.objective-text-column{
+  min-width:0 !important;
+  width:100% !important;
+  display:grid !important;
+  grid-template-rows:auto minmax(0,1fr) !important;
+  align-items:stretch !important;
+  justify-items:stretch !important;
+  overflow:hidden !important;
+}
+.objective-title{
+  width:100% !important;
+  max-width:100% !important;
+  min-width:0 !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  text-align:center !important;
+  margin:0 !important;
+  padding:0 4px 3px !important;
+  overflow:hidden !important;
+  white-space:nowrap !important;
+  line-height:1 !important;
+}
+.objective-title span{
+  min-width:0 !important;
+  max-width:100% !important;
+  text-align:center !important;
+  white-space:nowrap !important;
+  overflow:hidden !important;
+}
+.objective-input{
+  width:100% !important;
+  height:100% !important;
+  min-width:0 !important;
+  min-height:0 !important;
+  align-self:stretch !important;
+  justify-self:stretch !important;
+}
+
+/* EARLY FINISHERS:
+   BIG shared media on LEFT.
+   Exactly three equal boxes LEFT-TO-RIGHT on RIGHT while editing.
+   In normal view, filled boxes divide the same horizontal space evenly. */
+.early-content-grid{
+  width:100% !important;
+  height:100% !important;
+  min-height:0 !important;
+  display:grid !important;
+  grid-template-columns:minmax(190px,36%) minmax(0,64%) !important;
+  grid-template-rows:minmax(0,1fr) !important;
+  gap:10px !important;
+  align-items:stretch !important;
+  overflow:hidden !important;
+}
+.early-media-slot{
+  grid-column:1 !important;
+  grid-row:1 !important;
+  width:100% !important;
+  height:100% !important;
+  min-width:0 !important;
+  min-height:0 !important;
+  max-width:none !important;
+  max-height:none !important;
+  aspect-ratio:auto !important;
+  align-self:stretch !important;
+  justify-self:stretch !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  overflow:hidden !important;
+  background:#fff !important;
+}
+.early-media-slot img,
+.early-media-slot video{
+  position:absolute !important;
+  inset:0 !important;
+  width:100% !important;
+  height:100% !important;
+  max-width:100% !important;
+  max-height:100% !important;
+  object-fit:contain !important;
+  object-position:center !important;
+}
+.early-media-slot img{
+  background:#fff !important;
+}
+.early-media-slot video{
+  background:#000 !important;
+}
+
+.early-text-column{
+  grid-column:2 !important;
+  grid-row:1 !important;
+  min-width:0 !important;
+  min-height:0 !important;
+  height:100% !important;
+  display:grid !important;
+  grid-template-rows:auto minmax(0,1fr) !important;
+  gap:7px !important;
+  overflow:hidden !important;
+}
+.early-title{
+  width:100% !important;
+  display:flex !important;
+  justify-content:center !important;
+  align-items:center !important;
+  text-align:center !important;
+  margin:0 !important;
+  padding:0 3px !important;
+}
+
+/* The 3 text boxes run horizontally instead of vertically. */
+.early-three-list{
+  width:100% !important;
+  height:100% !important;
+  min-width:0 !important;
+  min-height:0 !important;
+  display:grid !important;
+  grid-template-rows:minmax(0,1fr) !important;
+  grid-auto-flow:column !important;
+  grid-auto-columns:minmax(0,1fr) !important;
+  gap:8px !important;
+  align-items:stretch !important;
+  overflow:hidden !important;
+}
+
+/* Normal view: use the number actually filled. */
+.early-three-list[data-count="1"]{
+  grid-template-columns:minmax(0,1fr) !important;
+}
+.early-three-list[data-count="2"]{
+  grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+}
+.early-three-list[data-count="3"]{
+  grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+}
+
+/* Edit mode always shows three clean equal boxes across. */
+body.edit-mode .early-three-list{
+  grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+  grid-auto-flow:row !important;
+}
+
+.early-three-row,
+body.edit-mode .early-three-row{
+  width:100% !important;
+  height:100% !important;
+  min-width:0 !important;
+  min-height:0 !important;
+  max-width:none !important;
+  max-height:none !important;
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) 25px !important;
+  grid-template-rows:minmax(0,1fr) !important;
+  align-items:stretch !important;
+  gap:4px !important;
+  padding:6px !important;
+  margin:0 !important;
+  overflow:hidden !important;
+  border-radius:14px !important;
+}
+.early-three-row .reminder-text{
+  width:100% !important;
+  height:100% !important;
+  min-width:0 !important;
+  min-height:0 !important;
+  max-width:100% !important;
+  max-height:100% !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  text-align:center !important;
+  white-space:pre-wrap !important;
+  overflow-wrap:break-word !important;
+  word-break:normal !important;
+  writing-mode:horizontal-tb !important;
+  padding:8px 6px !important;
+  overflow:hidden !important;
+  line-height:1.08 !important;
+}
+.early-three-row .reminder-remove{
+  align-self:start !important;
+  justify-self:end !important;
+  width:23px !important;
+  height:23px !important;
+  margin:0 !important;
+}
+
+/* VOICE LEVEL:
+   selected number is approximately 2x the ordinary number size and blinks,
+   but the purple panel clips it safely so it never escapes the box. */
+.voice{
+  overflow:hidden !important;
+}
+.voice-buttons{
+  min-height:0 !important;
+  overflow:visible !important;
+  padding:15px 10px 12px !important;
+  gap:5px !important;
+  align-items:center !important;
+}
+.voice-btn{
+  position:relative !important;
+  z-index:1 !important;
+  transform-origin:center !important;
+  font-size:clamp(19px,1.8vw,31px) !important;
+  transition:none !important;
+}
+.voice-btn.active{
+  z-index:5 !important;
+  font-size:clamp(38px,3.6vw,62px) !important;
+  transform:scale(1) !important;
+  animation:voiceBlinkBig .82s ease-in-out infinite !important;
+  box-shadow:
+    inset 0 0 0 4px #fff,
+    0 4px 0 rgba(0,0,0,.20) !important;
+}
+@keyframes voiceBlinkBig{
+  0%,100%{
+    opacity:1;
+    filter:brightness(1);
+    transform:scale(1);
+  }
+  50%{
+    opacity:.52;
+    filter:brightness(1.18);
+    transform:scale(.96);
+  }
+}
+
+/* Keep the giant selected circle within the actual purple panel. */
+.voice-buttons{
+  clip-path:inset(-2px 0 -2px 0 round 8px);
+}
+
+/* Keep the voice label large but leave room for the bigger selected number. */
+.voice-label{
+  font-size:clamp(29px,2.55vw,46px) !important;
+  line-height:.9 !important;
+  min-height:42px !important;
+}
+
+@media(max-width:1100px){
+  .early-content-grid{
+    grid-template-columns:minmax(155px,34%) minmax(0,66%) !important;
+    gap:7px !important;
+  }
+  .early-three-list{
+    gap:5px !important;
+  }
+  .early-three-row{
+    padding:4px !important;
+    grid-template-columns:minmax(0,1fr) 21px !important;
+  }
+  .voice-btn.active{
+    font-size:clamp(32px,3.3vw,51px) !important;
+  }
+}
+
+
+/* ============================================================
+   v52 — reliable editing / inline rich text / clickable controls
+   ============================================================ */
+
+/* Colored words/underlines stay inline instead of becoming flex items. */
+.objective-input.rich-editor,
+.step-text.rich-editor,
+.task-step-text.rich-editor,
+.early-three-row .reminder-text.rich-editor{
+  display:block !important;
+  flex:none !important;
+  writing-mode:horizontal-tb !important;
+  white-space:pre-wrap !important;
+  overflow-wrap:break-word !important;
+  word-break:normal !important;
+  letter-spacing:normal !important;
+  word-spacing:normal !important;
+}
+
+.rich-editor span,
+.rich-editor u,
+.rich-editor font,
+.rich-editor b,
+.rich-editor i,
+.rich-editor strong,
+.rich-editor em{
+  display:inline !important;
+  position:static !important;
+  float:none !important;
+  width:auto !important;
+  height:auto !important;
+  margin:0 !important;
+  padding:0 !important;
+  font-size:inherit !important;
+  line-height:inherit !important;
+  letter-spacing:inherit !important;
+  word-spacing:inherit !important;
+  vertical-align:baseline !important;
+}
+
+.objective-input.rich-editor{
+  text-align:center !important;
+  padding:18px 14px !important;
+}
+.step-text.rich-editor{
+  text-align:left !important;
+}
+.task-step-text.rich-editor{
+  text-align:center !important;
+}
+.early-three-row .reminder-text.rich-editor{
+  text-align:center !important;
+  padding:14px 8px !important;
+}
+
+/* Toolbar only intercepts clicks on its actual controls. */
+.rich-format-toolbar{
+  z-index:1600 !important;
+  pointer-events:none !important;
+}
+.rich-format-toolbar > *{
+  pointer-events:auto !important;
+}
+
+/* Bottom controls always sit above every Edit-mode overlay. */
+.grade-switch,
+.utilities{
+  z-index:2200 !important;
+  pointer-events:auto !important;
+}
+.dashboard-nav{
+  z-index:2100 !important;
+  pointer-events:auto !important;
+}
+.grade-btn,
+#editToggle,
+#saveStatus,
+#fullscreenToggle{
+  position:relative !important;
+  z-index:2201 !important;
+  pointer-events:auto !important;
+  cursor:pointer !important;
+}
+
+/* Editable panel layers cannot cover footer controls. */
+body.edit-mode .learning,
+body.edit-mode .task,
+body.edit-mode .reminders,
+body.edit-mode .bathroom{
+  isolation:isolate !important;
+}
+
+/* Formatting never changes font size/spacing while Edit mode is active. */
+body.edit-mode .rich-editor{
+  max-width:100% !important;
+}
+
+/* Rich text generated by browser color commands stays visually seamless. */
+.rich-editor [style*="color"]{
+  display:inline !important;
+  margin:0 !important;
+  padding:0 !important;
+}
+
+/* Give the click a tiny visual response. */
+.grade-btn:active,
+#editToggle:active,
+#saveStatus:active{
+  transform:translateY(1px) !important;
+}
