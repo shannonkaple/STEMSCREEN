@@ -15,9 +15,18 @@ const TABLES = [
 
 const STORAGE_PREFIX = "taskscreen.github.v12.";
 const ACTIVE_GRADE_KEY = STORAGE_PREFIX + "activeGrade";
+const SESSION_BACKUP_PREFIX = STORAGE_PREFIX + "sessionBackup.";
 function safeStorageObject(kind){ try { return window[kind] || null; } catch(e) { return null; } }
 function safeStoreGet(store,key){ try { return store?.getItem(key) ?? null; } catch(e) { return null; } }
-function safeStoreSet(store,key,value){ try { store?.setItem(key,value); return true; } catch(e) { return false; } }
+function safeStoreSet(store,key,value){
+  if(!store) return false;
+  try {
+    store.setItem(key,value);
+    return store.getItem(key) === value;
+  } catch(e) {
+    return false;
+  }
+}
 function safeStoreRemove(store,key){ try { store?.removeItem(key); return true; } catch(e) { return false; } }
 const safeLocalGet = key => safeStoreGet(safeStorageObject("localStorage"),key);
 const safeLocalSet = (key,value) => safeStoreSet(safeStorageObject("localStorage"),key,value);
@@ -205,7 +214,8 @@ function stripBlankEditorRows() {
 
 function loadState(grade) {
   let parsed = {};
-  try { parsed = JSON.parse(safeLocalGet(STORAGE_PREFIX + grade) || "{}"); } catch(e) {}
+  const saved = safeLocalGet(STORAGE_PREFIX + grade) || safeSessionGet(SESSION_BACKUP_PREFIX + grade) || "{}";
+  try { parsed = JSON.parse(saved); } catch(e) {}
   const merged = deepMerge(defaultState(), parsed);
   merged.successCriteria = cleanSavedList(merged.successCriteria, "s");
   if(!merged.countdown || typeof merged.countdown !== "object") merged.countdown = {endTime:""};
@@ -247,14 +257,42 @@ function loadState(grade) {
 }
 
 let saveTimer = null;
-function saveState() {
-  safeLocalSet(STORAGE_PREFIX + activeGrade, JSON.stringify(state));
+function saveState({showStatus=true}={}) {
+  const payload = JSON.stringify(state);
+  const localOk = safeLocalSet(STORAGE_PREFIX + activeGrade, payload);
+  const backupOk = safeSessionSet(SESSION_BACKUP_PREFIX + activeGrade, payload);
+  const ok = localOk || backupOk;
+
   const status = $("#saveStatus");
-  if(status){ status.textContent = "SAVING"; status.classList.add("saving"); }
+  if(status && showStatus) {
+    status.textContent = ok ? "SAVING" : "SAVE FAILED";
+    status.classList.toggle("saving", ok);
+    status.classList.toggle("save-failed", !ok);
+  }
+
   clearTimeout(saveTimer);
-  saveTimer = setTimeout(() => {
-    if(status){ status.textContent = "SAVED"; status.classList.remove("saving"); }
-  }, 350);
+  if(ok) {
+    saveTimer = setTimeout(() => {
+      if(status) {
+        status.textContent = "SAVED";
+        status.classList.remove("saving","save-failed");
+      }
+    }, 220);
+  }
+  return ok;
+}
+
+function commitFocusedEditor() {
+  const active = document.activeElement;
+  if(!active) return;
+  if(active.matches?.("[contenteditable='true'], textarea, input[type='text'], input[type='url'], input[type='time']")) {
+    try { active.dispatchEvent(new Event("input",{bubbles:true})); } catch(e) {}
+  }
+}
+
+function saveNow() {
+  commitFocusedEditor();
+  return saveState();
 }
 
 function getPath(obj, path) {
@@ -377,6 +415,7 @@ $$("[data-edit-key]").forEach(el => {
 
 /* Edit mode */
 function setEditMode(on) {
+  commitFocusedEditor();
   const wasEditing = editMode;
 
   if(wasEditing && !on) {
@@ -384,31 +423,38 @@ function setEditMode(on) {
     saveState();
   }
 
-  editMode = on;
-  document.body.classList.toggle("edit-mode", on);
-  $("#editToggle").textContent = on ? "DONE" : "EDIT";
+  editMode = !!on;
+  document.body.classList.toggle("edit-mode", editMode);
+
+  const editButton = $("#editToggle");
+  if(editButton) {
+    editButton.textContent = editMode ? "DONE" : "EDIT";
+    editButton.setAttribute("aria-pressed", editMode ? "true" : "false");
+  }
 
   $$("[data-edit-key]").forEach(el => {
-    el.contentEditable = on ? "true" : "false";
+    el.contentEditable = editMode ? "true" : "false";
     el.spellcheck = false;
   });
 
   const voiceLabel = $("#voiceLabel");
-  voiceLabel.contentEditable = on ? "true" : "false";
-  voiceLabel.spellcheck = false;
+  if(voiceLabel) {
+    voiceLabel.contentEditable = editMode ? "true" : "false";
+    voiceLabel.spellcheck = false;
+  }
 
   $$("[data-table-label]").forEach(span => {
-    span.contentEditable = on ? "true" : "false";
+    span.contentEditable = editMode ? "true" : "false";
     span.spellcheck = false;
   });
 
   const objectiveEditor = $("#objectiveInput");
   if(objectiveEditor) {
-    objectiveEditor.contentEditable = on ? "true" : "false";
+    objectiveEditor.contentEditable = editMode ? "true" : "false";
     objectiveEditor.spellcheck = false;
   }
 
-  if(on) {
+  if(editMode) {
     ensureOneEditorRow("successCriteria","s");
     ensureOneEditorRow("taskSteps","t");
     if(!Array.isArray(state.reminders)) state.reminders = [];
@@ -421,16 +467,42 @@ function setEditMode(on) {
   renderSectionIcons().catch(()=>{});
   renderAllLists().catch(()=>{});
   renderTaskSteps();
+
   requestAnimationFrame(() => {
     fitObjectiveText();
     fitChecklistText();
   });
 
-  if(on && navigator.storage?.persist) {
+  if(editMode && navigator.storage?.persist) {
     navigator.storage.persist().catch(()=>{});
   }
+
+  if(!editMode) saveState();
 }
-$("#editToggle")?.addEventListener("click", () => setEditMode(!editMode));
+
+const editToggleButton = $("#editToggle");
+editToggleButton?.addEventListener("click", e => {
+  e.preventDefault();
+  e.stopPropagation();
+  setEditMode(!editMode);
+});
+
+$("#saveStatus")?.addEventListener("click", e => {
+  e.preventDefault();
+  e.stopPropagation();
+  saveNow();
+});
+
+window.addEventListener("pagehide", () => {
+  commitFocusedEditor();
+  saveState({showStatus:false});
+});
+document.addEventListener("visibilitychange", () => {
+  if(document.visibilityState === "hidden") {
+    commitFocusedEditor();
+    saveState({showStatus:false});
+  }
+});
 
 /* Grade profiles */
 async function switchGrade(grade) {
