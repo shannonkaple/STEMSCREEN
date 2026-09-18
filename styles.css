@@ -3365,3 +3365,165 @@ body.edit-mode .rich-editor{
 #editToggle,#saveStatus,#fullscreenToggle,.grade-btn,.voice-btn,.period-btn,.table-btn,#bathroomNext,#bathroomReset,.add-step,.add-task-step,.mode-btn,.file-btn,#imageUploadBtn,#videoUploadBtn,.early-media-button,.section-icon-button{pointer-events:auto !important;touch-action:manipulation !important}
 .grade-switch,.utilities{position:absolute !important;z-index:5000 !important}
 .grade-switch *,.utilities *{pointer-events:auto !important}
+
+
+/* ============================================================
+   v54 — Objective heading above text + true 3-across Early Finishers
+   ============================================================ */
+
+/* FIX an old v37 rule that was forcing the Objective text into an
+   implicit second column INSIDE objective-text-column. */
+.objective-text-column{
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) !important;
+  grid-template-rows:auto minmax(0,1fr) !important;
+  gap:6px !important;
+  align-items:stretch !important;
+  justify-items:stretch !important;
+}
+
+.objective-title{
+  grid-column:1 !important;
+  grid-row:1 !important;
+  width:100% !important;
+  max-width:100% !important;
+  justify-self:stretch !important;
+  align-self:center !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  text-align:center !important;
+  margin:0 !important;
+  padding:1px 4px 3px !important;
+}
+
+.objective-input,
+.objective-input.rich-editor{
+  grid-column:1 !important;
+  grid-row:2 !important;
+  width:100% !important;
+  height:100% !important;
+  min-width:0 !important;
+  min-height:0 !important;
+  max-width:100% !important;
+  max-height:100% !important;
+  align-self:stretch !important;
+  justify-self:stretch !important;
+  margin:0 !important;
+}
+
+/* EARLY FINISHERS:
+   The X button floats over the upper-right corner instead of consuming
+   a dedicated 25px grid column. This gives the text the entire box width. */
+.early-three-list,
+body.edit-mode .early-three-list{
+  grid-template-rows:minmax(0,1fr) !important;
+  grid-auto-flow:row !important;
+  align-items:stretch !important;
+}
+
+body.edit-mode .early-three-list{
+  grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+}
+
+.early-three-list[data-count="1"]{
+  grid-template-columns:minmax(0,1fr) !important;
+}
+.early-three-list[data-count="2"]{
+  grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+}
+.early-three-list[data-count="3"]{
+  grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+}
+
+.early-three-row,
+body.edit-mode .early-three-row{
+  position:relative !important;
+  display:block !important;
+  width:100% !important;
+  height:100% !important;
+  min-width:0 !important;
+  min-height:0 !important;
+  max-width:none !important;
+  max-height:none !important;
+  padding:7px !important;
+  margin:0 !important;
+  overflow:hidden !important;
+}
+
+.early-three-row .reminder-text,
+.early-three-row .reminder-text.rich-editor{
+  display:block !important;
+  width:100% !important;
+  height:100% !important;
+  min-width:0 !important;
+  min-height:0 !important;
+  max-width:100% !important;
+  max-height:100% !important;
+  margin:0 !important;
+  padding:18px 12px 12px !important;
+  text-align:center !important;
+  writing-mode:horizontal-tb !important;
+  white-space:pre-wrap !important;
+  overflow-wrap:break-word !important;
+  word-break:normal !important;
+  overflow:hidden !important;
+  line-height:1.08 !important;
+}
+
+/* Small overlay clear button — it no longer changes text width. */
+.early-three-row .reminder-remove,
+body.edit-mode .early-three-row .reminder-remove{
+  position:absolute !important;
+  top:5px !important;
+  right:5px !important;
+  left:auto !important;
+  bottom:auto !important;
+  z-index:8 !important;
+  width:20px !important;
+  height:20px !important;
+  min-width:20px !important;
+  min-height:20px !important;
+  display:grid !important;
+  place-items:center !important;
+  margin:0 !important;
+  padding:0 !important;
+  border:2px solid #000 !important;
+  border-radius:50% !important;
+  background:#fff !important;
+  font-size:13px !important;
+  line-height:1 !important;
+}
+
+body:not(.edit-mode) .early-three-row .reminder-remove{
+  display:none !important;
+}
+
+/* Keep all 3 boxes genuinely horizontal even at projector/browser widths. */
+@media(max-width:1100px){
+  body.edit-mode .early-three-list,
+  .early-three-list[data-count="3"]{
+    grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+  }
+  .early-three-row .reminder-text,
+  .early-three-row .reminder-text.rich-editor{
+    padding:17px 8px 9px !important;
+  }
+}
+
+
+/* ============================================================
+   v55 — fresh-code control
+   ============================================================ */
+#refreshFiles{
+  white-space:nowrap !important;
+  padding-left:9px !important;
+  padding-right:9px !important;
+}
+@media(max-width:1100px){
+  #refreshFiles{
+    padding-left:6px !important;
+    padding-right:6px !important;
+    font-size:7px !important;
+  }
+}

@@ -566,6 +566,21 @@ $("#saveStatus")?.addEventListener("click", e => {
   saveNow();
 }, true);
 
+$("#refreshFiles")?.addEventListener("click", e => {
+  e.preventDefault();
+  e.stopImmediatePropagation();
+
+  /* Save classroom state first. This reload changes only the website-file URL;
+     localStorage and IndexedDB media are intentionally left untouched. */
+  commitFocusedEditor();
+  saveState({showStatus:false});
+
+  const url = new URL(window.location.href);
+  url.searchParams.delete("v");
+  url.searchParams.set("fresh", Date.now().toString(36));
+  window.location.replace(url.pathname + "?" + url.searchParams.toString() + url.hash);
+}, true);
+
 window.addEventListener("pagehide", () => {
   commitFocusedEditor();
   saveState({showStatus:false});

@@ -3,9 +3,37 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<script>
+(() => {
+  const url = new URL(window.location.href);
+  const existingFresh = url.searchParams.get("fresh");
+
+  /* Opening the normal STEMSCREEN URL in a new tab/window gets a unique URL,
+     which forces GitHub Pages/browser caches to fetch the current files. */
+  if(!existingFresh) {
+    const token = Date.now().toString(36);
+    url.searchParams.delete("v");
+    url.searchParams.set("fresh", token);
+    window.location.replace(url.pathname + "?" + url.searchParams.toString() + url.hash);
+    return;
+  }
+
+  window.__STEM_FRESH_TOKEN = existingFresh;
+})();
+</script>
 <title>STEM Task Screen</title>
-<link rel="icon" type="image/png" href="./star.png?v=53">
-<link rel="stylesheet" href="./styles.css?v=53">
+<link rel="icon" type="image/png" href="./star.png?v=55">
+<link id="mainStylesheet" rel="stylesheet" href="./styles.css?v=55">
+<script>
+(() => {
+  const token = window.__STEM_FRESH_TOKEN || Date.now().toString(36);
+  const link = document.getElementById("mainStylesheet");
+  if(link) link.href = `./styles.css?v=55&fresh=${encodeURIComponent(token)}`;
+})();
+</script>
 </head>
 <body>
 <div class="board" id="board">
@@ -201,8 +229,8 @@
   </section>
 
 
-  <a class="dashboard-nav grouper-nav" href="./grouper.html?v=53">RAINBOW GROUPER</a>
-  <a class="page-arrow page-arrow-right" href="./cleanup.html?v=53" aria-label="Open clean up board">→</a>
+  <a class="dashboard-nav grouper-nav" href="./grouper.html?v=55">RAINBOW GROUPER</a>
+  <a class="page-arrow page-arrow-right" href="./cleanup.html?v=55" aria-label="Open clean up board">→</a>
 
 
   <div class="rich-format-toolbar edit-only" id="richFormatToolbar" aria-label="Selected text formatting">
@@ -223,16 +251,36 @@
 
   <div class="utilities">
     <button class="save-status" id="saveStatus" type="button" title="Save now">SAVED</button>
+    <button class="utility refresh-files-btn" id="refreshFiles" type="button" title="Reload the newest website files without deleting saved classroom data">REFRESH FILES</button>
     <button class="utility" id="fullscreenToggle" type="button">FULL SCREEN</button>
     <button class="utility" id="editToggle" type="button">EDIT</button>
   </div>
 </div>
 
   <div class="page-overlay" id="pageOverlay" aria-hidden="true">
-    <iframe class="page-frame" id="grouperFrame" src="./grouper.html?v=53&embedded=1" title="Rainbow Grouper" allow="fullscreen"></iframe>
-    <iframe class="page-frame" id="cleanupFrame" src="./cleanup.html?v=53&embedded=1" title="Clean Up" allow="autoplay; fullscreen"></iframe>
+    <iframe class="page-frame" id="grouperFrame" src="about:blank" data-page-src="./grouper.html?v=55&embedded=1" title="Rainbow Grouper" allow="fullscreen"></iframe>
+    <iframe class="page-frame" id="cleanupFrame" src="about:blank" data-page-src="./cleanup.html?v=55&embedded=1" title="Clean Up" allow="autoplay; fullscreen"></iframe>
   </div>
 
-<script src="./app.js?v=53"></script>
+<script>
+(() => {
+  const token = window.__STEM_FRESH_TOKEN || Date.now().toString(36);
+
+  const grouperFrame = document.getElementById("grouperFrame");
+  const cleanupFrame = document.getElementById("cleanupFrame");
+
+  if(grouperFrame) {
+    grouperFrame.src = `${grouperFrame.dataset.pageSrc}&fresh=${encodeURIComponent(token)}`;
+  }
+  if(cleanupFrame) {
+    cleanupFrame.src = `${cleanupFrame.dataset.pageSrc}&fresh=${encodeURIComponent(token)}`;
+  }
+
+  const script = document.createElement("script");
+  script.src = `./app.js?v=55&fresh=${encodeURIComponent(token)}`;
+  script.async = false;
+  document.body.appendChild(script);
+})();
+</script>
 </body>
 </html>
