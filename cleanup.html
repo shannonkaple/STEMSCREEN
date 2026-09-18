@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Clean Up</title>
-<link rel="icon" type="image/png" href="./star.png?v=52">
+<link rel="icon" type="image/png" href="./star.png?v=53">
 <style>
 @font-face{font-family:"KAHomebodyClub";src:url("./KAHomebodyClub.ttf") format("truetype");font-display:swap}
 @font-face{font-family:"VAGTaskscreen";src:url("./VAG-Rounded-Std-Black_47296.ttf") format("truetype");font-display:swap}
@@ -241,7 +241,7 @@ body.presentation-mode{position:fixed!important;inset:0!important;width:100vw!im
 </head>
 
 <body>
-<a class="back-arrow" href="./index.html?v=52" aria-label="Back to Task Screen">←</a>
+<a class="back-arrow" href="./index.html?v=53" aria-label="Back to Task Screen">←</a>
 <button class="fullscreen-btn" id="cleanupFullscreen" type="button">FULL SCREEN</button>
 
 <main class="cleanup-shell">
@@ -352,7 +352,7 @@ body.presentation-mode{position:fixed!important;inset:0!important;width:100vw!im
 
   document.querySelector(".back-arrow")?.addEventListener("click", e => {
     e.preventDefault();
-    go("./index.html?v=52");
+    go("./index.html?v=53");
   });
 
   document.addEventListener("keydown", e => {
@@ -360,7 +360,7 @@ body.presentation-mode{position:fixed!important;inset:0!important;width:100vw!im
     if(e.key === "ArrowLeft"){
       e.preventDefault();
       if(embedded) window.parent.postMessage({type:"stem-nav",source:"cleanup",key:"ArrowLeft"},"*");
-      else go("./index.html?v=52");
+      else go("./index.html?v=53");
     }
   });
 

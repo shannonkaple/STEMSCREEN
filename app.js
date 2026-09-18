@@ -189,7 +189,7 @@ function cleanSavedList(items, prefix) {
   const arr = Array.isArray(items) ? items : [];
   const out = [];
   for(const raw of arr) {
-    const item = (raw && typeof raw === "object") ? {...raw} : {text:String(raw || "")};
+    let item = (raw && typeof raw === "object") ? {...raw} : {text:String(raw || "")};
     item.text = String(item.text || "");
     item = normalizeRichItem(item);
     if(!item.text.trim()) continue;
@@ -546,11 +546,18 @@ function setEditMode(on) {
 }
 
 const editToggleButton = $("#editToggle");
+let editToggleBusy = false;
 editToggleButton?.addEventListener("click", e => {
   e.preventDefault();
   e.stopImmediatePropagation();
-  commitFocusedEditor();
-  setEditMode(!editMode);
+  if(editToggleBusy) return;
+  editToggleBusy = true;
+  try {
+    commitFocusedEditor();
+    setEditMode(!editMode);
+  } finally {
+    setTimeout(() => { editToggleBusy = false; }, 80);
+  }
 }, true);
 
 $("#saveStatus")?.addEventListener("click", e => {
@@ -1722,17 +1729,11 @@ document.querySelector(".page-arrow-right")?.addEventListener("click", e => {
 /* Full-viewport presentation mode is always available. Native fullscreen,
    once entered on the Task Screen, stays alive because Grouper/Cleanup are
    shown as same-document overlays rather than navigating away. */
+/* Full-viewport layout starts automatically.
+   Native browser fullscreen is entered ONLY from the FULL SCREEN button so
+   the teacher's first click can never be swallowed. */
 document.body.classList.add("presentation-mode");
 safeSessionSet("stemPresentationMode","1");
-let nativeFullscreenRequested = false;
-async function requestNativeFullscreenOnce(){
-  if(nativeFullscreenRequested || isPageFullscreen()) return;
-  nativeFullscreenRequested = true;
-  await enterPageFullscreen();
-  syncFullscreenButton();
-}
-document.addEventListener("pointerdown", requestNativeFullscreenOnce, {once:true,capture:true});
-document.addEventListener("keydown", requestNativeFullscreenOnce, {once:true,capture:true});
 
 const cleanupPromptStyle = document.createElement("style");
 cleanupPromptStyle.textContent = `
@@ -1836,6 +1837,22 @@ window.addEventListener("resize", () => {
 });
 
 state = loadState(activeGrade);
-setEditMode(false);
-switchGrade(activeGrade);
+safeSessionSet(ACTIVE_GRADE_KEY, activeGrade);
+safeLocalSet(ACTIVE_GRADE_KEY, activeGrade);
+$$(".grade-btn").forEach(b => b.classList.toggle("active", b.dataset.grade === activeGrade));
+editMode = false;
+document.body.classList.remove("edit-mode");
+const initialEditButton = $("#editToggle");
+if(initialEditButton) {
+  initialEditButton.textContent = "EDIT";
+  initialEditButton.setAttribute("aria-pressed","false");
+}
+renderAll().catch(err => {
+  console.error("Initial Task Screen render failed:", err);
+  const status = $("#saveStatus");
+  if(status) {
+    status.textContent = "LOAD ERROR";
+    status.classList.add("save-failed");
+  }
+});
 })();

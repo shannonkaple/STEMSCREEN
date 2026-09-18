@@ -3357,3 +3357,11 @@ body.edit-mode .rich-editor{
 #saveStatus:active{
   transform:translateY(1px) !important;
 }
+
+
+/* v53 interaction safety */
+.page-overlay{pointer-events:none !important;visibility:hidden !important}
+.page-overlay.active{pointer-events:auto !important;visibility:visible !important}
+#editToggle,#saveStatus,#fullscreenToggle,.grade-btn,.voice-btn,.period-btn,.table-btn,#bathroomNext,#bathroomReset,.add-step,.add-task-step,.mode-btn,.file-btn,#imageUploadBtn,#videoUploadBtn,.early-media-button,.section-icon-button{pointer-events:auto !important;touch-action:manipulation !important}
+.grade-switch,.utilities{position:absolute !important;z-index:5000 !important}
+.grade-switch *,.utilities *{pointer-events:auto !important}
